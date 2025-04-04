@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sole Source Procurement Assessment Tool</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .important-notice {
+            background-color: #f0f7ff;
+            border: 1px solid #cce5ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .resources-section {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-check {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .form-check:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .form-check.selected {
+            border-color: #0066cc;
+            background-color: #f0f7ff;
+        }
+        
+        .progress-bar {
+            background-color: #eee;
+            height: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        #progress-indicator {
+            background-color: #0066cc;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background-color: #0066cc;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #eee;
+            color: #333;
+        }
+        
+        .invisible {
+            visibility: hidden;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Sole Source Procurement Assessment Tool</h1>
+            <p class="description">
+                This tool helps you determine if your procurement may qualify as a sole source. 
+                Answer the questions below to receive guidance.
+            </p>
+            <div class="important-notice">
+                <p>Important: This tool provides guidance only. Procurement Services makes the final determination on sole source requests.</p>
+            </div>
+            
+            <div class="resources-section">
+                <h2 style="margin-bottom: 10px;">Additional Resources</h2>
+                <div>
+                    <a href="#" style="color: #0066cc; text-decoration: none;">
+                        Download Sole Source Documentation Form
+                    </a>
+                    <div style="margin-top: 10px;">
+                        <p style="font-weight: 500;">Contact Purchasing:</p>
+                        <ul style="margin-left: 20px;">
+                            <li>
+                                <a href="mailto:purchasing@vcu.edu" style="color: #0066cc; text-decoration: none;">
+                                    Email: purchasing@vcu.edu
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" style="color: #0066cc; text-decoration: none;">
+                                    Submit a support ticket
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main id="form-container">
+            <div class="mb-6">
+                <p id="step-title" style="font-size: 20px; font-weight: 600; margin-bottom: 10px;">Step 1: Procurement Amount</p>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="step-counter" style="font-size: 14px; color: #666;">Step 1 of 5</span>
+                    <div class="progress-bar">
+                        <div id="progress-indicator" style="width: 20%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-content" class="fade-in">
+                <p style="margin-bottom: 15px; color: #444;">What is the estimated dollar amount of your procurement?</p>
+                <div>
+                    <div class="form-check" data-value="less_than_10k" onclick="handleAmountSelection(this)">
+                        <input type="radio" name="amount" value="less_than_10k">
+                        <label>
+                            <span style="font-weight: 500;">Less than $10,000</span>
+                            <span style="display: block; color: #666; font-size: 14px;">Delegated authority threshold</span>
+                        </label>
+                    </div>
+                    <div class="form-check" data-value="10k_to_200k" onclick="handleAmountSelection(this)">
+                        <input type="radio" name="amount" value="10k_to_200k">
+                        <label>
+                            <span style="font-weight: 500;">$10,000 to $200,000</span>
+                            <span style="display: block; color: #666; font-size: 14px;">Standard sole source documentation required</span>
+                        </label>
+                    </div>
+                    <div class="form-check" data-value="above_200k" onclick="handleAmountSelection(this)">
+                        <input type="radio" name="amount" value="above_200k">
+                        <label>
+                            <span style="font-weight: 500;">$200,000 and above</span>
+                            <span style="display: block; color: #666; font-size: 14px;">Additional approval required</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button id="prev-button" onclick="handlePrevious()" class="btn btn-secondary invisible">
+                    Previous
+                </button>
+                <button id="next-button" onclick="handleNext()" class="btn btn-primary" disabled>
+                    Next
+                </button>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>
+                Sole Source Procurement Assessment Tool<br>
+                This tool is for guidance purposes only. Final determination is made by Procurement Services.
+            </p>
+        </footer>
+    </div>
+
+    <!-- Required JavaScript libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Your main script file -->
+    <script src="script.js"></script>
+</body>
+</html>
