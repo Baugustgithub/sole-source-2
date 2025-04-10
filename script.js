@@ -123,8 +123,8 @@ function evaluateResult() {
     };
   } else if (yesCount >= 3) {
     return {
-      title: "Potential Sole Source – Needs Stronger Justification",
-      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
+      title: "Potential Sole Source",
+      message: `This request might qualify as a sole source, but will need to be evaluated. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
     };
   } else {
     return {
