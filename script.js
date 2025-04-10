@@ -197,33 +197,56 @@ function submitForm() {
   document.getElementById('start-over').addEventListener('click', () => window.location.reload());
 
   document.getElementById('download-pdf').addEventListener('click', () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
 
-    let y = 35;
+  let y = 35;
 
-    function addSection(title, value) {
-      doc.setFont(undefined, 'bold');
-      doc.text(`${title}:`, 20, y);
-      y += 6;
-      doc.setFont(undefined, 'normal');
-      const lines = doc.splitTextToSize(value || 'N/A', 170);
-      doc.text(lines, 20, y);
-      y += lines.length * 6 + 4;
-    }
+  function addSection(title, value) {
+    doc.setFont(undefined, 'bold');
+    doc.text(`${title}:`, 20, y);
+    y += 6;
+    doc.setFont(undefined, 'normal');
+    const lines = doc.splitTextToSize(value || 'N/A', 170);
+    doc.text(lines, 20, y);
+    y += lines.length * 6 + 4;
+  }
 
-    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
-    formData.screeningAnswers.forEach((ans, i) => {
-      addSection(`Question ${i + 1}`, ans ? "Yes" : "No");
-    });
-    addSection('Price Reasonableness Acknowledged', formData.acknowledged ? "Yes" : "No");
-    addSection('Result', result.title);
-    addSection('Guidance', result.message);
+  addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
 
-    doc.save('VCU-Sole-Source-Screening.pdf');
+  const questions = [
+    "Does the product or service have unique features or capabilities that only one supplier can provide?",
+    "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+    "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+    "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+    "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+  ];
+
+  doc.setFont(undefined, 'bold');
+  doc.text("Screening Questions & Answers:", 20, y);
+  y += 8;
+
+  doc.setFont(undefined, 'normal');
+  questions.forEach((q, i) => {
+    const answer = formData.screeningAnswers[i] === true ? "Yes" : formData.screeningAnswers[i] === false ? "No" : "Not answered";
+    const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
+    doc.text(qLines, 20, y);
+    y += qLines.length * 6;
+    doc.text(`Answer: ${answer}`, 25, y);
+    y += 10;
   });
-}
+
+  addSection("Acknowledgment", formData.acknowledged
+    ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
+    : "Not acknowledged");
+
+  addSection('Final Result', result.title);
+  addSection('Guidance', result.message);
+
+  doc.save('VCU-Sole-Source-Screening.pdf');
+});
 
 const steps = [
   { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
