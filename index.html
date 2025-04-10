@@ -25,7 +25,7 @@
     </div>
 
     <div class="flex justify-between">
-      <button id="prev-button" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50" disabled>Previous</button>
+      <button id="prev-button" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50 invisible">Previous</button>
       <button id="next-button" class="bg-yellow-500 text-white px-4 py-2 rounded disabled:opacity-50">Next</button>
     </div>
   </div>
@@ -33,10 +33,12 @@
   <!-- jsPDF Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Load Script -->
+  <!-- Initialize jsPDF globally -->
   <script>
     const { jsPDF } = window.jspdf;
   </script>
+
+  <!-- Your App Script -->
   <script src="script.js"></script>
 </body>
 </html>
