@@ -18,38 +18,52 @@ function updateProgressIndicator() {
   document.getElementById('step-title').textContent = steps[currentStep - 1].title;
 }
 
-function handleAmountSelection(value) {
-  formData.amount = value;
-  document.getElementById('next-button').disabled = false;
+function goToNextStep() {
+  if (currentStep === 1 && formData.amount === 'under_10k') return submitForm();
+  if (currentStep === totalSteps) return submitForm();
+
+  currentStep++;
+  updateProgressIndicator();
+  steps[currentStep - 1].createContent();
+  document.getElementById('prev-button').classList.remove('invisible');
 }
 
+function goToPreviousStep() {
+  if (currentStep > 1) {
+    currentStep--;
+    updateProgressIndicator();
+    steps[currentStep - 1].createContent();
+    if (currentStep === 1) {
+      document.getElementById('prev-button').classList.add('invisible');
+    }
+  }
+}
+
+// STEP 1: PROCUREMENT AMOUNT
 function createStepOneContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
     <p class="mb-4 text-gray-700 font-medium">What is the estimated dollar amount of your procurement?</p>
     <div class="space-y-3">
-      <div class="form-check" onclick="handleAmountSelection('under_10k')">
-        <label class="flex items-start">
-          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500" ${formData.amount === 'under_10k' ? 'checked' : ''}> <span class="ml-3">Less than $10,000</span>
-        </label>
-      </div>
-      <div class="form-check" onclick="handleAmountSelection('10k_or_more')">
-        <label class="flex items-start">
-          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500" ${formData.amount === '10k_or_more' ? 'checked' : ''}> <span class="ml-3">$10,000 or more</span>
-        </label>
-      </div>
+      <label class="form-check block">
+        <input type="radio" name="amount" value="under_10k" onclick="handleAmountChange(this)" ${formData.amount === 'under_10k' ? 'checked' : ''}>
+        <span class="ml-2">Less than $10,000</span>
+      </label>
+      <label class="form-check block">
+        <input type="radio" name="amount" value="10k_or_more" onclick="handleAmountChange(this)" ${formData.amount === '10k_or_more' ? 'checked' : ''}>
+        <span class="ml-2">$10,000 or more</span>
+      </label>
     </div>
   `;
-
   document.getElementById('next-button').disabled = !formData.amount;
 }
 
-function handleScreeningSelection(index, value) {
-  formData.screeningAnswers[index] = value;
-  const allAnswered = formData.screeningAnswers.every(ans => ans !== null);
-  document.getElementById('next-button').disabled = !allAnswered;
+function handleAmountChange(radio) {
+  formData.amount = radio.value;
+  document.getElementById('next-button').disabled = false;
 }
 
+// STEP 2: SCREENING QUESTIONS
 function createStepTwoContent() {
   const questions = [
     "Does the product or service have unique features or capabilities that only one supplier can provide?",
@@ -63,18 +77,18 @@ function createStepTwoContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following six questions to evaluate your request:</p>`;
 
-  questions.forEach((q, index) => {
-    const answer = formData.screeningAnswers[index];
+  questions.forEach((text, index) => {
+    const selected = formData.screeningAnswers[index];
     stepContent.innerHTML += `
-      <div class="mb-5">
-        <p class="font-semibold text-gray-800">${index + 1}. ${q}</p>
-        <div class="space-x-4 mt-1">
+      <div class="mb-4">
+        <p class="font-semibold text-gray-800">${index + 1}. ${text}</p>
+        <div class="mt-1 space-x-4">
           <label class="inline-flex items-center">
-            <input type="radio" name="q${index}" ${answer === true ? "checked" : ""} onclick="handleScreeningSelection(${index}, true)">
+            <input type="radio" name="q${index}" ${selected === true ? 'checked' : ''} onclick="handleScreening(${index}, true)">
             <span class="ml-2">Yes</span>
           </label>
           <label class="inline-flex items-center">
-            <input type="radio" name="q${index}" ${answer === false ? "checked" : ""} onclick="handleScreeningSelection(${index}, false)">
+            <input type="radio" name="q${index}" ${selected === false ? 'checked' : ''} onclick="handleScreening(${index}, false)">
             <span class="ml-2">No</span>
           </label>
         </div>
@@ -82,135 +96,28 @@ function createStepTwoContent() {
     `;
   });
 
-  document.getElementById('next-button').disabled = !formData.screeningAnswers.every(ans => ans !== null);
+  document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
-function handleAcknowledgmentChange(checkbox) {
-  formData.acknowledged = checkbox.checked;
-  document.getElementById('next-button').disabled = !formData.acknowledged;
+function handleScreening(index, value) {
+  formData.screeningAnswers[index] = value;
+  document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
+// STEP 3: PRICE REASONABLENESS
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
     <p class="mb-4 text-gray-700 font-medium">Before viewing your results, please confirm:</p>
     <label class="inline-flex items-start space-x-2">
-      <input type="checkbox" onclick="handleAcknowledgmentChange(this)" ${formData.acknowledged ? 'checked' : ''}>
-      <span>I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
+      <input type="checkbox" id="ack-check" onclick="handleAckToggle()" ${formData.acknowledged ? 'checked' : ''}>
+      <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
     </label>
   `;
-
   document.getElementById('next-button').disabled = !formData.acknowledged;
 }
 
-function evaluateResult() {
-  if (formData.amount === "under_10k") {
-    return {
-      title: "Not a Sole Source – Delegated Authority",
-      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation. Proceed with purchasing through an appropriate method (e.g., p-card or small-dollar PO) without submitting a sole source justification."
-    };
-  }
-
-  const yesAnswers = formData.screeningAnswers.filter(Boolean).length;
-  const q4Yes = formData.screeningAnswers[3] === true;
-
-  if (yesAnswers >= 4 && q4Yes) {
-    return {
-      title: "Strong Case for Sole Source",
-      message: "Based on your answers, this request appears to have a strong case for a sole source. Download and complete the Sole Source Justification Form, attach it to your requisition in RealSource, and submit it for procurement review."
-    };
-  } else if (yesAnswers === 3 && q4Yes) {
-    return {
-      title: "Potential Sole Source – Needs Stronger Justification",
-      message: "Your request might qualify as a sole source, but the justification could be stronger. Review your answers to see if additional factors apply. If you choose to proceed, complete the Justification Form and submit it through RealSource."
-    };
-  } else {
-    return {
-      title: "Not Likely a Sole Source",
-      message: "Your request likely does not meet sole source criteria. Explore whether other suppliers could practicably meet your needs and consider alternative procurement methods."
-    };
-  }
+function handleAckToggle() {
+  formData.acknowledged = document.getElementById('ack-check').checked;
+  document.getElementById('next-button').disabled = !formData.acknowledged;
 }
-
-function submitForm() {
-  const result = evaluateResult();
-  const container = document.getElementById('form-container');
-
-  container.innerHTML = `
-    <div class="p-6 fade-in">
-      <h2 class="text-xl font-semibold mb-4">Sole Source Screening Results</h2>
-      <div class="bg-green-50 border border-green-200 p-4 mb-6 rounded-md">
-        <h3 class="text-lg font-medium text-green-800 mb-2">${result.title}</h3>
-        <p class="text-green-700">${result.message}</p>
-      </div>
-      <div class="flex space-x-4 mt-6">
-        <button id="start-over" class="btn-secondary px-4 py-2 rounded-md">Start Over</button>
-        <button id="download-pdf" class="btn-primary px-4 py-2 rounded-md">Download PDF</button>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('start-over').addEventListener('click', () => window.location.reload());
-
-  document.getElementById('download-pdf').addEventListener('click', () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
-    let y = 35;
-
-    const questions = [
-      "Does the product or service have unique features or capabilities that only one supplier can provide?",
-      "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
-      "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
-      "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
-      "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
-    ];
-
-    function addSection(title, value) {
-      doc.setFont(undefined, 'bold');
-      doc.text(`${title}:`, 20, y);
-      y += 6;
-      doc.setFont(undefined, 'normal');
-      const lines = doc.splitTextToSize(value || 'N/A', 170);
-      doc.text(lines, 20, y);
-      y += lines.length * 6 + 4;
-    }
-
-    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
-
-    doc.setFont(undefined, 'bold');
-    doc.text("Screening Questions & Answers:", 20, y);
-    y += 8;
-    doc.setFont(undefined, 'normal');
-
-    questions.forEach((q, i) => {
-      const answer = formData.screeningAnswers[i] ? "Yes" : "No";
-      const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
-      doc.text(qLines, 20, y);
-      y += qLines.length * 6;
-      doc.text(`Answer: ${answer}`, 25, y);
-      y += 10;
-    });
-
-    addSection("Acknowledgment", formData.acknowledged
-      ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
-      : "Not acknowledged");
-
-    addSection('Final Result', result.title);
-    addSection('Guidance', result.message);
-
-    doc.save('VCU-Sole-Source-Screening.pdf');
-  });
-}
-
-const steps = [
-  { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
-  { title: "Step 2: Screening Questions", createContent: createStepTwoContent },
-  { title: "Step 3: Price Reasonableness", createContent: createStepThreeContent }
-];
-
-document.addEventListener('DOMContentLoaded', function () {
-  updateProgressIndicator();
-  createStepOneContent();
-});
