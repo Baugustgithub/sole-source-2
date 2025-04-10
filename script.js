@@ -181,15 +181,27 @@ function handleNext() {
   document.getElementById('prev-button').classList.remove('invisible');
 }
 
-function handlePrevious() {
-  if (currentStep > 1) {
-    currentStep--;
-    updateProgressIndicator();
-    steps[currentStep - 1].createContent();
-    if (currentStep === 1) {
-      document.getElementById('prev-button').classList.add('invisible');
-    }
+function handleNext() {
+  console.log("Next button clicked");
+  console.log("Current Step:", currentStep);
+
+  if (currentStep === 1 && formData.amount === 'under_10k') {
+    console.log("Submitting form for Step 1 with amount under $10k");
+    return submitForm();
   }
+  if (currentStep === totalSteps) {
+    console.log("Submitting form on the last step");
+    return submitForm();
+  }
+
+  currentStep++;
+  console.log("Updated Step:", currentStep);
+
+  updateProgressIndicator();
+  steps[currentStep - 1].createContent();
+
+  document.getElementById('prev-button').classList.remove('invisible');
+}
 }
 function submitForm() {
   const result = evaluateResult();
