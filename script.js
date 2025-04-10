@@ -164,7 +164,7 @@ function submitForm() {
       <h2 class="text-xl font-semibold mb-4">Sole Source Screening Results</h2>
       <div class="bg-green-50 border border-green-200 p-4 mb-6 rounded-md">
         <h3 class="text-lg font-medium text-green-800 mb-2">${result.title}</h3>
-        <p class="text-green-700">${result.message}</p>
+        <p class="text-green-700">${result.message.replace("Sole Source Justification Form", `<a href='https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx' target='_blank' class='underline text-blue-600'>Sole Source Documentation Form</a>`)}</p>
       </div>
       <div class="flex space-x-4 mt-6">
         <button id="start-over" class="btn-secondary px-4 py-2 rounded-md">Start Over</button>
@@ -180,6 +180,61 @@ function submitForm() {
       </div>
     </div>
   `;
+
+  document.getElementById('start-over').addEventListener('click', () => window.location.reload());
+
+  document.getElementById('download-pdf').addEventListener('click', () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
+
+    let y = 35;
+    const questions = [
+      "Does the product or service have unique features or capabilities that only one supplier can provide?",
+      "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+      "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+      "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+      "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+    ];
+
+    function addSection(title, value) {
+      doc.setFont(undefined, 'bold');
+      doc.text(`${title}:`, 20, y);
+      y += 6;
+      doc.setFont(undefined, 'normal');
+      const lines = doc.splitTextToSize(value || 'N/A', 170);
+      doc.text(lines, 20, y);
+      y += lines.length * 6 + 4;
+    }
+
+    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+
+    doc.setFont(undefined, 'bold');
+    doc.text("Screening Questions & Answers:", 20, y);
+    y += 8;
+    doc.setFont(undefined, 'normal');
+
+    questions.forEach((q, i) => {
+      const answer = formData.screeningAnswers[i] ? "Yes" : "No";
+      const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
+      doc.text(qLines, 20, y);
+      y += qLines.length * 6;
+      doc.text(`Answer: ${answer}`, 25, y);
+      y += 10;
+    });
+
+    addSection("Acknowledgment", formData.acknowledged
+      ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
+      : "Not acknowledged");
+
+    const final = evaluateResult();
+    addSection('Final Result', final.title);
+    addSection('Guidance', final.message.replace(/<[^>]+>/g, ''));
+
+    doc.save('VCU-Sole-Source-Screening.pdf');
+  });
+}
 
   document.getElementById('start-over').addEventListener('click', () => window.location.reload());
 }
