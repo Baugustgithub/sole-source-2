@@ -5,6 +5,7 @@ const { jsPDF } = window.jspdf;
 let formData = {
   amount: null,
   screeningAnswers: [null, null, null, null, null, null],
+  additionalFlags: [],
   acknowledged: false
 };
 
@@ -24,7 +25,7 @@ function createStepOneContent() {
     <div class="mb-6 text-gray-700">
       <p class="mb-2 font-medium">Purpose</p>
       <p class="text-sm">
-        This tool helps you determine if a procurement request might qualify as a sole source—meaning only one supplier can practicably meet your needs due to unique features, constraints, or other factors.
+        This tool helps you determine if a procurement request might qualify as a sole source—meaning only one supplier can practicably meet your needs due to unique features, technical constraints, or other non-time-related factors.
         Answer the yes/no questions below to get instant feedback. No text input is required—just check the boxes.
         The procurement department will make the final determination, but this gives you a solid starting point.
       </p>
@@ -81,12 +82,58 @@ function createStepTwoContent() {
     `;
   });
 
+  // Additional Checkbox-style Dummy Justifications
+  const dummyOptions = [
+    "My preferred vendor",
+    "They offer the best price",
+    "They can meet my timeline",
+    "I’ve worked with them before",
+    "It's more convenient",
+    "None of the above"
+  ];
+
+  stepContent.innerHTML += `
+    <div class="mt-6">
+      <p class="font-medium text-gray-700 mb-2">Additional Answers</p>
+      <div class="space-y-2">
+        ${dummyOptions.map((label) => `
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="dummy" value="${label}" ${formData.additionalFlags.includes(label) ? 'checked' : ''} onclick="handleFlagClick(this)">
+            <span class="ml-2">${label}</span>
+          </label>
+        `).join('<br>')}
+      </div>
+    </div>
+  `;
+
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
+}
+
+function handleFlagClick(checkbox) {
+  const value = checkbox.value;
+
+  if (value === "None of the above") {
+    formData.additionalFlags = ["None of the above"];
+    document.querySelectorAll('input[name="dummy"]').forEach(cb => {
+      if (cb.value !== "None of the above") cb.checked = false;
+    });
+  } else {
+    const index = formData.additionalFlags.indexOf("None of the above");
+    if (index !== -1) formData.additionalFlags.splice(index, 1);
+    document.querySelector('input[value="None of the above"]').checked = false;
+
+    if (checkbox.checked) {
+      formData.additionalFlags.push(value);
+    } else {
+      const idx = formData.additionalFlags.indexOf(value);
+      if (idx !== -1) formData.additionalFlags.splice(idx, 1);
+    }
+  }
 }
 
 function createStepThreeContent() {
@@ -123,8 +170,8 @@ function evaluateResult() {
     };
   } else if (yesCount >= 3) {
     return {
-      title: "Potential Sole Source",
-      message: `This request might qualify as a sole source, but will need to be evaluated. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a>. Please complete the form and attach it to your requisition in RealSource. Once submitted, a buyer in Purchasing will review it to determine if it qualifies as a sole source request.`
+      title: "Potential Sole Source – Needs Stronger Justification",
+      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
     };
   } else {
     return {
@@ -223,6 +270,8 @@ function submitForm() {
       doc.text(`Answer: ${answer}`, 25, y);
       y += 10;
     });
+
+    addSection("Additional Answers", formData.additionalFlags.join(", ") || "None selected");
 
     addSection("Acknowledgment", formData.acknowledged
       ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
