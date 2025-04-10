@@ -4,7 +4,8 @@ const { jsPDF } = window.jspdf;
 
 let formData = {
   amount: null,
-  screeningAnswers: Array(12).fill(null),
+  screeningAnswers: Array(6).fill(null),
+  additionalReasons: [],
   acknowledged: false
 };
 
@@ -48,26 +49,21 @@ function handleAmountChange(input) {
   formData.amount = input.value;
   document.getElementById('next-button').disabled = false;
 }
+
 function createStepTwoContent() {
-  const allQuestions = [
+  const questions = [
     "Does the product or service have unique features or capabilities that only one supplier can provide?",
     "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
     "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
     "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
     "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
-    "My preferred vendor",
-    "They offer the best price",
-    "They can meet my timeline",
-    "I’ve worked with them before",
-    "It's more convenient",
-    "None of the above"
+    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
   ];
 
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following questions to evaluate your request:</p>`;
 
-  allQuestions.forEach((text, index) => {
+  questions.forEach((text, index) => {
     const selected = formData.screeningAnswers[index];
     stepContent.innerHTML += `
       <div class="mb-4">
@@ -86,27 +82,48 @@ function createStepTwoContent() {
     `;
   });
 
-  document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
-}
+  // Additional Justifications
+  const additionalOptions = [
+    "My preferred vendor",
+    "They offer the best price",
+    "They can meet my timeline",
+    "I’ve worked with them before",
+    "It's more convenient",
+    "Other"
+  ];
 
-function handleScreening(index, value) {
-  if (index === 11 && value === true) { // "None of the above"
-    formData.screeningAnswers = formData.screeningAnswers.map((_, i) => i === 11 ? true : null);
-    document.querySelectorAll(`input[name^='q']`).forEach((input, i) => {
-      input.checked = (i === 22); // Only "None of the above" remains selected
-    });
-  } else {
-    formData.screeningAnswers[index] = value;
-    if (index !== 11) {
-      formData.screeningAnswers[11] = null;
-      const noneInput = document.querySelector(`input[name='q11'][value='true']`);
-      if (noneInput) noneInput.checked = false;
-    }
-  }
+  stepContent.innerHTML += `
+    <div class="mt-6">
+      <p class="font-medium text-gray-700 mb-2">Which of the following apply? (Optional)</p>
+      <div class="space-y-2">
+        ${additionalOptions.map(option => `
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="additional" value="${option}" 
+              ${formData.additionalReasons.includes(option) ? 'checked' : ''}
+              onclick="handleAdditionalReason(this)">
+            <span class="ml-2">${option}</span>
+          </label>
+        `).join('<br>')}
+      </div>
+    </div>
+  `;
 
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
 }
 
+function handleScreening(index, value) {
+  formData.screeningAnswers[index] = value;
+  document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
+}
+
+function handleAdditionalReason(checkbox) {
+  const value = checkbox.value;
+  if (checkbox.checked) {
+    if (!formData.additionalReasons.includes(value)) formData.additionalReasons.push(value);
+  } else {
+    formData.additionalReasons = formData.additionalReasons.filter(r => r !== value);
+  }
+}
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
@@ -125,7 +142,7 @@ function handleAckToggle() {
 }
 
 function evaluateResult() {
-  const validYesCount = formData.screeningAnswers.slice(0, 6).filter(Boolean).length;
+  const yesCount = formData.screeningAnswers.filter(Boolean).length;
 
   if (formData.amount === "under_10k") {
     return {
@@ -134,12 +151,12 @@ function evaluateResult() {
     };
   }
 
-  if (validYesCount >= 5) {
+  if (yesCount >= 5) {
     return {
       title: "Strong Case for Sole Source",
       message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Documentation Form</a>, then attach it to your requisition in RealSource.`
     };
-  } else if (validYesCount >= 3) {
+  } else if (yesCount >= 3) {
     return {
       title: "Potential Sole Source – Needs Stronger Justification",
       message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
@@ -151,6 +168,7 @@ function evaluateResult() {
     };
   }
 }
+
 function handleNext() {
   if (currentStep === 1 && formData.amount === 'under_10k') return submitForm();
   if (currentStep === totalSteps) return submitForm();
@@ -171,7 +189,6 @@ function handlePrevious() {
     }
   }
 }
-
 function submitForm() {
   const result = evaluateResult();
   const container = document.getElementById('form-container');
@@ -202,81 +219,68 @@ function submitForm() {
 
   document.getElementById('download-pdf').addEventListener('click', () => {
     const doc = new jsPDF();
-    const margin = 20;
-    let y = margin;
-
     const questions = [
       "Does the product or service have unique features or capabilities that only one supplier can provide?",
       "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
       "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
       "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
       "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
-      "My preferred vendor",
-      "They offer the best price",
-      "They can meet my timeline",
-      "I’ve worked with them before",
-      "It's more convenient",
-      "None of the above"
+      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
     ];
 
-    function addSection(title, value, color = [0, 0, 0]) {
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.setTextColor(...color);
-      doc.text(title + ":", margin, y);
-      y += 6;
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(60);
-      const lines = doc.splitTextToSize(value || 'N/A', 170);
-      doc.text(lines, margin, y);
-      y += lines.length * 6 + 4;
-    }
+    const headers = [["#", "Question", "Answer"]];
+    const rows = questions.map((q, i) => [
+      i + 1,
+      q,
+      formData.screeningAnswers[i] === true ? "Yes" :
+      formData.screeningAnswers[i] === false ? "No" : "Not Answered"
+    ]);
 
-    // Header
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(51, 51, 51);
-    doc.text("VCU Sole Source Initial Screening Summary", margin, y);
-    y += 10;
+    doc.setFontSize(16);
+    doc.text("VCU Sole Source Initial Screening Summary", 14, 18);
 
-    // Procurement amount
-    addSection("Procurement Amount", formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
-
-    // Questions
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text("Screening Questions", margin, y);
-    y += 8;
     doc.setFontSize(11);
-    doc.setFont(undefined, 'normal');
+    doc.text(`Procurement Amount: ${formData.amount === 'under_10k' ? 'Less than $10,000' : '$10,000 or more'}`, 14, 28);
 
-    questions.forEach((q, i) => {
-      const answer = formData.screeningAnswers[i] === true ? "Yes" : formData.screeningAnswers[i] === false ? "No" : "Not answered";
-      const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
-      doc.text(qLines, margin, y);
-      y += qLines.length * 5;
-      doc.text(`Answer: ${answer}`, margin + 5, y);
-      y += 8;
+    doc.autoTable({
+      startY: 35,
+      head: headers,
+      body: rows,
+      styles: { fontSize: 9, cellPadding: 3, valign: 'top' },
+      headStyles: { fillColor: [60, 60, 60], textColor: 255 }
     });
 
-    // Acknowledgment
-    addSection("Acknowledgment",
-      formData.acknowledged
-        ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
-        : "Not acknowledged"
-    );
+    let y = doc.previousAutoTable.finalY + 10;
+    doc.setFontSize(11);
 
-    // Final result
-    const result = evaluateResult();
-    const resultColor = result.title.includes("Strong") ? [0, 128, 0] : result.title.includes("Not") ? [200, 30, 30] : [240, 160, 0];
-    addSection("Final Result", result.title, resultColor);
-    addSection("Guidance", result.message.replace(/<[^>]+>/g, ''));
+    doc.text("Additional Justifications (if any):", 14, y);
+    y += 6;
+    if (formData.additionalReasons.length > 0) {
+      doc.setFont(undefined, "normal");
+      formData.additionalReasons.forEach(reason => {
+        doc.text(`• ${reason}`, 18, y);
+        y += 6;
+      });
+    } else {
+      doc.text("None selected.", 18, y);
+      y += 6;
+    }
 
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text("Disclaimer: This tool provides a preliminary assessment. Final decisions rest with Procurement Services.", margin, 280);
+    y += 8;
+    doc.setFont(undefined, "bold");
+    doc.text("Final Result:", 14, y);
+    y += 6;
+    doc.setFont(undefined, "normal");
+    const resultLines = doc.splitTextToSize(evaluateResult().title, 180);
+    doc.text(resultLines, 14, y);
+    y += resultLines.length * 6;
+
+    doc.setFont(undefined, "bold");
+    doc.text("Guidance:", 14, y);
+    y += 6;
+    doc.setFont(undefined, "normal");
+    const msgLines = doc.splitTextToSize(evaluateResult().message.replace(/<[^>]+>/g, ''), 180);
+    doc.text(msgLines, 14, y);
 
     doc.save("VCU-Sole-Source-Screening.pdf");
   });
