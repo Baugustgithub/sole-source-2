@@ -1,31 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VCU Sole Source Initial Screening Tool</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VCU Sole Source Screening Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-  <div id="form-container" class="container mx-auto p-6">
-    <div id="progress-bar" class="w-full bg-gray-200 h-2 mb-6">
-      <div id="progress-indicator" class="h-2 bg-blue-600" style="width: 0%;"></div>
+<body class="bg-gray-50 text-gray-900">
+
+  <div id="form-container" class="max-w-3xl mx-auto mt-8 p-6 bg-white shadow rounded-lg">
+    <div class="mb-6">
+      <div class="w-full bg-gray-200 h-2 rounded">
+        <div id="progress-indicator" class="bg-blue-600 h-2 rounded transition-all duration-300" style="width: 0%;"></div>
+      </div>
     </div>
-    <div id="step-header" class="mb-4">
-      <h1 id="step-title" class="text-xl font-semibold"></h1>
-      <p id="step-counter" class="text-gray-600"></p>
+
+    <div class="mb-4">
+      <h2 id="step-title" class="text-2xl font-bold">Step Title</h2>
+      <p id="step-counter" class="text-sm text-gray-500">Step x of y</p>
     </div>
-    <div id="step-content" class="mb-6"></div>
+
+    <div id="step-content" class="mb-6">
+      <!-- Step content will render here -->
+    </div>
+
     <div class="flex justify-between">
-      <button id="prev-button" class="btn-secondary px-4 py-2 rounded-md invisible" onclick="handlePrevious()">Previous</button>
-      <button id="next-button" class="btn-primary px-4 py-2 rounded-md" onclick="handleNext()">Next</button>
+      <button id="prev-button" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50" disabled>Previous</button>
+      <button id="next-button" class="bg-yellow-500 text-white px-4 py-2 rounded disabled:opacity-50">Next</button>
     </div>
   </div>
 
   <!-- jsPDF Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Your Custom Script -->
+  <!-- Load Script -->
   <script>
     const { jsPDF } = window.jspdf;
   </script>
