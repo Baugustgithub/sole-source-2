@@ -32,11 +32,11 @@ function createStepOneContent() {
     <p class="mb-4 text-gray-700 font-medium">What is the estimated dollar amount of your procurement?</p>
     <div class="space-y-3">
       <label class="form-check block">
-        <input type="radio" name="amount" value="under_10k" onclick="handleAmountChange(this)" ${formData.amount === 'under_10k' ? 'checked' : ''}>
+        <input type="radio" name="amount" value="under_10k" onclick="handleAmountChange(this)">
         <span class="ml-2">Less than $10,000</span>
       </label>
       <label class="form-check block">
-        <input type="radio" name="amount" value="10k_or_more" onclick="handleAmountChange(this)" ${formData.amount === '10k_or_more' ? 'checked' : ''}>
+        <input type="radio" name="amount" value="10k_or_more" onclick="handleAmountChange(this)">
         <span class="ml-2">$10,000 or more</span>
       </label>
     </div>
@@ -48,6 +48,7 @@ function handleAmountChange(input) {
   formData.amount = input.value;
   document.getElementById('next-button').disabled = false;
 }
+
 function createStepTwoContent() {
   const questions = [
     {
@@ -126,13 +127,14 @@ function toggleGuidance(index) {
     guidance.classList.toggle('hidden');
   }
 }
+
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
     <p class="mb-4 text-gray-700 font-medium">Before viewing your results, please confirm:</p>
     <label class="inline-flex items-start space-x-2">
       <input type="checkbox" id="ack-check" onclick="handleAckToggle()" ${formData.acknowledged ? 'checked' : ''}>
-      <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
+      <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable.</span>
     </label>
   `;
   document.getElementById('next-button').disabled = !formData.acknowledged;
@@ -149,24 +151,24 @@ function evaluateResult() {
   if (formData.amount === "under_10k") {
     return {
       title: "Not a Sole Source – Delegated Authority",
-      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation. Proceed using p-card or standard purchasing methods."
+      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation. Proceed using standard purchasing methods."
     };
   }
 
   if (yesCount >= 5) {
     return {
       title: "Strong Case for Sole Source",
-      message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Documentation Form</a>, then attach it to your requisition in RealSource.`
+      message: `This request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Documentation Form</a>.`
     };
   } else if (yesCount >= 3) {
     return {
       title: "Potential Sole Source – Needs Stronger Justification",
-      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
+      message: `This request might qualify, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a>.`
     };
   } else {
     return {
       title: "Not Likely a Sole Source",
-      message: "Based on your responses, this request likely does not meet sole source criteria. Consider exploring other suppliers or competitive procurement methods."
+      message: "This request likely does not meet sole source criteria. Consider exploring other suppliers."
     };
   }
 }
@@ -191,6 +193,7 @@ function handlePrevious() {
     }
   }
 }
+
 function submitForm() {
   const result = evaluateResult();
   const container = document.getElementById('form-container');
@@ -206,14 +209,6 @@ function submitForm() {
         <button id="start-over" class="btn-secondary px-4 py-2 rounded-md">Start Over</button>
         <button id="download-pdf" class="btn-primary px-4 py-2 rounded-md">Download PDF</button>
       </div>
-      <div class="mt-10 border-t pt-6 text-sm text-gray-600 space-y-2">
-        <p><strong>Disclaimer:</strong> This tool offers a preliminary assessment. The procurement department has the final authority to approve sole source requests.</p>
-        <p>
-          <strong>Support:</strong> Need help? Contact procurement at
-          <a href="mailto:purchasing@vcu.edu" class="text-blue-600 underline">purchasing@vcu.edu</a>
-          or <a href="https://vcu-amc.ivanticloud.com/Default.aspx?Scope=ObjectWorkspace&CommandId=Search&ObjectType=ServiceReq%23#1729080190081" target="_blank" class="text-blue-600 underline">submit a service ticket</a>.
-        </p>
-      </div>
     </div>
   `;
 
@@ -222,13 +217,13 @@ function submitForm() {
   document.getElementById('download-pdf').addEventListener('click', () => {
     const doc = new jsPDF();
     const questions = [
-      "Does the product or service have unique features or capabilities that only one supplier can provide?",
-      "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
-      "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
-      "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
-      "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
-      "My preferred vendor, they offer the best price, they can meet my timeline, I’ve worked with them before, it’s about convenience, etc.",
+      "Does the product or service have unique features...",
+      "Are there legal or technical barriers...",
+      "Are there practical constraints...",
+      "Have you conducted a reasonable market check...",
+      "Would adapting another supplier’s product be unfeasible?",
+      "Is the supplier’s solution critical for compliance?",
+      "My preferred vendor and other convenience reasons.",
       "Other"
     ];
 
@@ -241,49 +236,19 @@ function submitForm() {
     ]);
 
     doc.setFontSize(16);
-    doc.text("VCU Sole Source Initial Screening Summary", 14, 18);
-
+    doc.text("VCU Sole Source Screening Summary", 14, 18);
     doc.setFontSize(11);
-    doc.text(`Procurement Amount: ${formData.amount === 'under_10k' ? 'Less than $10,000' : '$10,000 or more'}`, 14, 28);
-
     doc.autoTable({
-      startY: 35,
+      startY: 25,
       head: headers,
       body: rows,
-      styles: { fontSize: 9, cellPadding: 3, valign: 'top' },
+      styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [60, 60, 60], textColor: 255 }
     });
 
-    let y = doc.previousAutoTable.finalY + 10;
-    doc.setFont(undefined, "bold");
-    doc.text("Final Result:", 14, y);
-    y += 6;
-    doc.setFont(undefined, "normal");
-    const resultLines = doc.splitTextToSize(result.title, 180);
-    doc.text(resultLines, 14, y);
-    y += resultLines.length * 6;
-
-    doc.setFont(undefined, "bold");
-    doc.text("Guidance:", 14, y);
-    y += 6;
-    doc.setFont(undefined, "normal");
-    const msgLines = doc.splitTextToSize(result.message.replace(/<[^>]+>/g, ''), 180);
-    doc.text(msgLines, 14, y);
-
-    doc.save("VCU-Sole-Source-Screening.pdf");
+    doc.save("VCU-Sole-Source.pdf");
   });
 }
-
-const steps = [
-  { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
-  { title: "Step 2: Screening Questions", createContent: createStepTwoContent },
-  { title: "Step 3: Price Reasonableness", createContent: createStepThreeContent }
-];
-
-document.addEventListener('DOMContentLoaded', function () {
-  updateProgressIndicator();
-  createStepOneContent();
-});
 
 const steps = [
   { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
