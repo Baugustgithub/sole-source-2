@@ -48,7 +48,6 @@ function handleAmountChange(input) {
   formData.amount = input.value;
   document.getElementById('next-button').disabled = false;
 }
-
 function createStepTwoContent() {
   const allQuestions = [
     "Does the product or service have unique features or capabilities that only one supplier can provide?",
@@ -91,7 +90,20 @@ function createStepTwoContent() {
 }
 
 function handleScreening(index, value) {
-  formData.screeningAnswers[index] = value;
+  if (index === 11 && value === true) { // "None of the above"
+    formData.screeningAnswers = formData.screeningAnswers.map((_, i) => i === 11 ? true : null);
+    document.querySelectorAll(`input[name^='q']`).forEach((input, i) => {
+      input.checked = (i === 22); // Only "None of the above" remains selected
+    });
+  } else {
+    formData.screeningAnswers[index] = value;
+    if (index !== 11) {
+      formData.screeningAnswers[11] = null;
+      const noneInput = document.querySelector(`input[name='q11'][value='true']`);
+      if (noneInput) noneInput.checked = false;
+    }
+  }
+
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
@@ -111,6 +123,7 @@ function handleAckToggle() {
   formData.acknowledged = document.getElementById('ack-check').checked;
   document.getElementById('next-button').disabled = !formData.acknowledged;
 }
+
 function evaluateResult() {
   const validYesCount = formData.screeningAnswers.slice(0, 6).filter(Boolean).length;
 
@@ -138,7 +151,6 @@ function evaluateResult() {
     };
   }
 }
-
 function handleNext() {
   if (currentStep === 1 && formData.amount === 'under_10k') return submitForm();
   if (currentStep === totalSteps) return submitForm();
@@ -190,9 +202,8 @@ function submitForm() {
 
   document.getElementById('download-pdf').addEventListener('click', () => {
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
-    let y = 35;
+    const margin = 20;
+    let y = margin;
 
     const questions = [
       "Does the product or service have unique features or capabilities that only one supplier can provide?",
@@ -209,41 +220,65 @@ function submitForm() {
       "None of the above"
     ];
 
-    function addSection(title, value) {
+    function addSection(title, value, color = [0, 0, 0]) {
+      doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text(`${title}:`, 20, y);
+      doc.setTextColor(...color);
+      doc.text(title + ":", margin, y);
       y += 6;
       doc.setFont(undefined, 'normal');
+      doc.setTextColor(60);
       const lines = doc.splitTextToSize(value || 'N/A', 170);
-      doc.text(lines, 20, y);
+      doc.text(lines, margin, y);
       y += lines.length * 6 + 4;
     }
 
-    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(51, 51, 51);
+    doc.text("VCU Sole Source Initial Screening Summary", margin, y);
+    y += 10;
 
+    // Procurement amount
+    addSection("Procurement Amount", formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+
+    // Questions
+    doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text("Screening Questions & Answers:", 20, y);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Screening Questions", margin, y);
     y += 8;
+    doc.setFontSize(11);
     doc.setFont(undefined, 'normal');
 
     questions.forEach((q, i) => {
       const answer = formData.screeningAnswers[i] === true ? "Yes" : formData.screeningAnswers[i] === false ? "No" : "Not answered";
       const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
-      doc.text(qLines, 20, y);
-      y += qLines.length * 6;
-      doc.text(`Answer: ${answer}`, 25, y);
-      y += 10;
+      doc.text(qLines, margin, y);
+      y += qLines.length * 5;
+      doc.text(`Answer: ${answer}`, margin + 5, y);
+      y += 8;
     });
 
-    addSection("Acknowledgment", formData.acknowledged
-      ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
-      : "Not acknowledged");
+    // Acknowledgment
+    addSection("Acknowledgment",
+      formData.acknowledged
+        ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
+        : "Not acknowledged"
+    );
 
-    const final = evaluateResult();
-    addSection('Final Result', final.title);
-    addSection('Guidance', final.message.replace(/<[^>]+>/g, ''));
+    // Final result
+    const result = evaluateResult();
+    const resultColor = result.title.includes("Strong") ? [0, 128, 0] : result.title.includes("Not") ? [200, 30, 30] : [240, 160, 0];
+    addSection("Final Result", result.title, resultColor);
+    addSection("Guidance", result.message.replace(/<[^>]+>/g, ''));
 
-    doc.save('VCU-Sole-Source-Screening.pdf');
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text("Disclaimer: This tool provides a preliminary assessment. Final decisions rest with Procurement Services.", margin, 280);
+
+    doc.save("VCU-Sole-Source-Screening.pdf");
   });
 }
 
