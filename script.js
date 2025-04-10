@@ -119,12 +119,12 @@ function evaluateResult() {
   if (yesCount >= 5) {
     return {
       title: "Strong Case for Sole Source",
-      message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Justification Form</a>, then attach it to your requisition in RealSource.`
+      message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Documentation Form</a>, then attach it to your requisition in RealSource.`
     };
   } else if (yesCount >= 3) {
     return {
       title: "Potential Sole Source – Needs Stronger Justification",
-      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Justification Form</a> and complete it if you wish to proceed.`
+      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
     };
   } else {
     return {
@@ -164,7 +164,7 @@ function submitForm() {
       <h2 class="text-xl font-semibold mb-4">Sole Source Screening Results</h2>
       <div class="bg-green-50 border border-green-200 p-4 mb-6 rounded-md">
         <h3 class="text-lg font-medium text-green-800 mb-2">${result.title}</h3>
-        <p class="text-green-700">${result.message.replace("Sole Source Justification Form", `<a href='https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx' target='_blank' class='underline text-blue-600'>Sole Source Documentation Form</a>`)}</p>
+        <p class="text-green-700">${result.message}</p>
       </div>
       <div class="flex space-x-4 mt-6">
         <button id="start-over" class="btn-secondary px-4 py-2 rounded-md">Start Over</button>
@@ -234,9 +234,6 @@ function submitForm() {
 
     doc.save('VCU-Sole-Source-Screening.pdf');
   });
-}
-
-  document.getElementById('start-over').addEventListener('click', () => window.location.reload());
 }
 
 const steps = [
