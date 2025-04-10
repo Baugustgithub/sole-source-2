@@ -30,12 +30,12 @@ function createStepOneContent() {
     <div class="space-y-3">
       <div class="form-check" onclick="handleAmountSelection('under_10k')">
         <label class="flex items-start">
-          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500"> <span class="ml-3">Less than $10,000</span>
+          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500" ${formData.amount === 'under_10k' ? 'checked' : ''}> <span class="ml-3">Less than $10,000</span>
         </label>
       </div>
       <div class="form-check" onclick="handleAmountSelection('10k_or_more')">
         <label class="flex items-start">
-          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500"> <span class="ml-3">$10,000 or more</span>
+          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500" ${formData.amount === '10k_or_more' ? 'checked' : ''}> <span class="ml-3">$10,000 or more</span>
         </label>
       </div>
     </div>
@@ -44,33 +44,6 @@ function createStepOneContent() {
   document.getElementById('next-button').disabled = !formData.amount;
 }
 
-function handleNext() {
-  if (currentStep === 1 && formData.amount === 'under_10k') {
-    submitForm();
-    return;
-  }
-
-  if (currentStep === totalSteps) {
-    submitForm();
-    return;
-  }
-
-  currentStep++;
-  updateProgressIndicator();
-  steps[currentStep - 1].createContent();
-  document.getElementById('prev-button').classList.remove('invisible');
-}
-
-function handlePrevious() {
-  if (currentStep > 1) {
-    currentStep--;
-    updateProgressIndicator();
-    steps[currentStep - 1].createContent();
-    if (currentStep === 1) {
-      document.getElementById('prev-button').classList.add('invisible');
-    }
-  }
-}
 function handleScreeningSelection(index, value) {
   formData.screeningAnswers[index] = value;
   const allAnswered = formData.screeningAnswers.every(ans => ans !== null);
@@ -79,30 +52,12 @@ function handleScreeningSelection(index, value) {
 
 function createStepTwoContent() {
   const questions = [
-    {
-      text: "Does the product or service have unique features or capabilities that only one supplier can provide?",
-      guidance: "Consider specific technical specifications, proprietary technology, or specialized functionality that no other supplier offers."
-    },
-    {
-      text: "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
-      guidance: "Think about patents, copyrights, exclusive licenses, compatibility requirements with existing systems—or if the supplier is explicitly named in a grant or funding award."
-    },
-    {
-      text: "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
-      guidance: "Would alternatives fail due to geographic limitations, lack of necessary skills, or incompatibility with existing systems?"
-    },
-    {
-      text: "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
-      guidance: "A quick online search, contacting vendors, or reviewing industry sources can help confirm availability."
-    },
-    {
-      text: "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      guidance: "Would it require excessive cost, complexity, or risk to adjust an alternative?"
-    },
-    {
-      text: "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
-      guidance: "Does compliance with laws, safety, or operations tie you to this vendor?"
-    }
+    "Does the product or service have unique features or capabilities that only one supplier can provide?",
+    "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+    "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+    "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+    "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
   ];
 
   const stepContent = document.getElementById('step-content');
@@ -112,9 +67,8 @@ function createStepTwoContent() {
     const answer = formData.screeningAnswers[index];
     stepContent.innerHTML += `
       <div class="mb-5">
-        <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
-        <p class="text-sm text-gray-500 italic mb-2">Guidance: ${q.guidance}</p>
-        <div class="space-x-4">
+        <p class="font-semibold text-gray-800">${index + 1}. ${q}</p>
+        <div class="space-x-4 mt-1">
           <label class="inline-flex items-center">
             <input type="radio" name="q${index}" ${answer === true ? "checked" : ""} onclick="handleScreeningSelection(${index}, true)">
             <span class="ml-2">Yes</span>
@@ -141,13 +95,14 @@ function createStepThreeContent() {
   stepContent.innerHTML = `
     <p class="mb-4 text-gray-700 font-medium">Before viewing your results, please confirm:</p>
     <label class="inline-flex items-start space-x-2">
-      <input type="checkbox" onclick="handleAcknowledgmentChange(this)">
-      <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
+      <input type="checkbox" onclick="handleAcknowledgmentChange(this)" ${formData.acknowledged ? 'checked' : ''}>
+      <span>I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
     </label>
   `;
 
   document.getElementById('next-button').disabled = !formData.acknowledged;
 }
+
 function evaluateResult() {
   if (formData.amount === "under_10k") {
     return {
@@ -157,14 +112,14 @@ function evaluateResult() {
   }
 
   const yesAnswers = formData.screeningAnswers.filter(Boolean).length;
-  const answeredYesToQ4 = formData.screeningAnswers[3] === true;
+  const q4Yes = formData.screeningAnswers[3] === true;
 
-  if (yesAnswers >= 4 && answeredYesToQ4) {
+  if (yesAnswers >= 4 && q4Yes) {
     return {
       title: "Strong Case for Sole Source",
       message: "Based on your answers, this request appears to have a strong case for a sole source. Download and complete the Sole Source Justification Form, attach it to your requisition in RealSource, and submit it for procurement review."
     };
-  } else if (yesAnswers === 3 && answeredYesToQ4) {
+  } else if (yesAnswers === 3 && q4Yes) {
     return {
       title: "Potential Sole Source – Needs Stronger Justification",
       message: "Your request might qualify as a sole source, but the justification could be stronger. Review your answers to see if additional factors apply. If you choose to proceed, complete the Justification Form and submit it through RealSource."
@@ -180,6 +135,7 @@ function evaluateResult() {
 function submitForm() {
   const result = evaluateResult();
   const container = document.getElementById('form-container');
+
   container.innerHTML = `
     <div class="p-6 fade-in">
       <h2 class="text-xl font-semibold mb-4">Sole Source Screening Results</h2>
@@ -197,56 +153,56 @@ function submitForm() {
   document.getElementById('start-over').addEventListener('click', () => window.location.reload());
 
   document.getElementById('download-pdf').addEventListener('click', () => {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
+    let y = 35;
 
-  let y = 35;
+    const questions = [
+      "Does the product or service have unique features or capabilities that only one supplier can provide?",
+      "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+      "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+      "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+      "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+    ];
 
-  function addSection(title, value) {
+    function addSection(title, value) {
+      doc.setFont(undefined, 'bold');
+      doc.text(`${title}:`, 20, y);
+      y += 6;
+      doc.setFont(undefined, 'normal');
+      const lines = doc.splitTextToSize(value || 'N/A', 170);
+      doc.text(lines, 20, y);
+      y += lines.length * 6 + 4;
+    }
+
+    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+
     doc.setFont(undefined, 'bold');
-    doc.text(`${title}:`, 20, y);
-    y += 6;
+    doc.text("Screening Questions & Answers:", 20, y);
+    y += 8;
     doc.setFont(undefined, 'normal');
-    const lines = doc.splitTextToSize(value || 'N/A', 170);
-    doc.text(lines, 20, y);
-    y += lines.length * 6 + 4;
-  }
 
-  addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+    questions.forEach((q, i) => {
+      const answer = formData.screeningAnswers[i] ? "Yes" : "No";
+      const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
+      doc.text(qLines, 20, y);
+      y += qLines.length * 6;
+      doc.text(`Answer: ${answer}`, 25, y);
+      y += 10;
+    });
 
-  const questions = [
-    "Does the product or service have unique features or capabilities that only one supplier can provide?",
-    "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
-    "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
-    "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
-    "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
-  ];
+    addSection("Acknowledgment", formData.acknowledged
+      ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
+      : "Not acknowledged");
 
-  doc.setFont(undefined, 'bold');
-  doc.text("Screening Questions & Answers:", 20, y);
-  y += 8;
+    addSection('Final Result', result.title);
+    addSection('Guidance', result.message);
 
-  doc.setFont(undefined, 'normal');
-  questions.forEach((q, i) => {
-    const answer = formData.screeningAnswers[i] === true ? "Yes" : formData.screeningAnswers[i] === false ? "No" : "Not answered";
-    const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
-    doc.text(qLines, 20, y);
-    y += qLines.length * 6;
-    doc.text(`Answer: ${answer}`, 25, y);
-    y += 10;
+    doc.save('VCU-Sole-Source-Screening.pdf');
   });
-
-  addSection("Acknowledgment", formData.acknowledged
-    ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
-    : "Not acknowledged");
-
-  addSection('Final Result', result.title);
-  addSection('Guidance', result.message);
-
-  doc.save('VCU-Sole-Source-Screening.pdf');
-});
+}
 
 const steps = [
   { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
