@@ -124,7 +124,7 @@ function evaluateResult() {
   } else if (yesCount >= 3) {
     return {
       title: "Potential Sole Source",
-      message: `This request might qualify as a sole source, but will need to be evaluated. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
+      message: `This request might qualify as a sole source, but will need to be evaluated. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a>,complete it,Please complete it, and attach the form to your requisition in RealSource. Once submitted, a buyer in Purchasing will review it to determine if it qualifies as a sole source request.`
     };
   } else {
     return {
