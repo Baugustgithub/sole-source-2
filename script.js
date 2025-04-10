@@ -4,7 +4,7 @@ const { jsPDF } = window.jspdf;
 
 let formData = {
   amount: null,
-  screeningAnswers: Array(8).fill(null), // Now includes 8 questions
+  screeningAnswers: Array(8).fill(null),
   acknowledged: false
 };
 
@@ -48,27 +48,50 @@ function handleAmountChange(input) {
   formData.amount = input.value;
   document.getElementById('next-button').disabled = false;
 }
-
 function createStepTwoContent() {
   const questions = [
-    "Does the product or service have unique features or capabilities that only one supplier can provide?",
-    "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
-    "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
-    "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
-    "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
-    "My preferred vendor, they offer the best price, they can meet my timeline, I’ve worked with them before, it’s about convenience, etc.",
-    "Other"
+    {
+      text: "Does the product or service have unique features or capabilities that only one supplier can provide?",
+      guidance: "Consider specific technical specifications, proprietary technology, or specialized functionality that no other supplier offers."
+    },
+    {
+      text: "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+      guidance: "Think about patents, copyrights, exclusive licenses, or compatibility requirements with existing systems or equipment."
+    },
+    {
+      text: "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+      guidance: "Reflect on whether alternatives would fail due to geographic limitations, lack of necessary skills, or incompatibility with existing systems."
+    },
+    {
+      text: "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+      guidance: "This could be an online search, contacting a few vendors, or reviewing industry resources to confirm availability."
+    },
+    {
+      text: "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+      guidance: "Evaluate if alternatives could be adjusted but would involve excessive cost, complexity, or risk."
+    },
+    {
+      text: "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+      guidance: "Consider whether compliance with laws, safety rules, or operational protocols ties you to this supplier."
+    },
+    {
+      text: "My preferred vendor, they offer the best price, they can meet my timeline, I’ve worked with them before, it’s about convenience, etc.",
+      guidance: null
+    },
+    {
+      text: "Other",
+      guidance: null
+    }
   ];
 
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following questions to evaluate your request:</p>`;
 
-  questions.forEach((text, index) => {
+  questions.forEach((q, index) => {
     const selected = formData.screeningAnswers[index];
     stepContent.innerHTML += `
       <div class="mb-4">
-        <p class="font-semibold text-gray-800">${index + 1}. ${text}</p>
+        <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
         <div class="mt-1 space-x-4">
           <label class="inline-flex items-center">
             <input type="radio" name="q${index}" ${selected === true ? 'checked' : ''} onclick="handleScreening(${index}, true)">
@@ -79,6 +102,12 @@ function createStepTwoContent() {
             <span class="ml-2">No</span>
           </label>
         </div>
+        ${q.guidance ? `
+          <p class="guidance-toggle text-blue-600 underline cursor-pointer text-sm mt-1" onclick="toggleGuidance(${index})">Show guidance</p>
+          <div id="guidance-${index}" class="text-sm text-gray-600 mt-1 hidden">
+            Guidance: ${q.guidance}
+          </div>
+        ` : ''}
       </div>
     `;
   });
@@ -89,6 +118,13 @@ function createStepTwoContent() {
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
+}
+
+function toggleGuidance(index) {
+  const guidance = document.getElementById(`guidance-${index}`);
+  if (guidance) {
+    guidance.classList.toggle('hidden');
+  }
 }
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
