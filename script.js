@@ -114,7 +114,6 @@ function createStepTwoContent() {
 
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
 }
-}
 
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
@@ -256,8 +255,6 @@ function submitForm() {
     });
 
     let y = doc.previousAutoTable.finalY + 10;
-    doc.setFontSize(11);
-
     doc.setFont(undefined, "bold");
     doc.text("Final Result:", 14, y);
     y += 6;
