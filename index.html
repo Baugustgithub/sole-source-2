@@ -1,209 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sole Source Procurement Assessment Tool</title>
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .mb-4 {
-            margin-bottom: 1rem;
-        }
-        
-        .mb-6 {
-            margin-bottom: 1.5rem;
-        }
-        
-        .mb-8 {
-            margin-bottom: 2rem;
-        }
-        
-        .text-2xl {
-            font-size: 1.5rem;
-        }
-        
-        .font-bold {
-            font-weight: 700;
-        }
-        
-        .text-gray-600 {
-            color: #666;
-        }
-        
-        .form-check {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .form-check:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .form-check.selected {
-            border-color: #0066cc;
-            background-color: #f0f7ff;
-        }
-        
-        .form-check input {
-            margin-right: 10px;
-        }
-        
-        .form-check label {
-            cursor: pointer;
-        }
-        
-        .progress-bar {
-            background-color: #eee;
-            height: 8px;
-            border-radius: 4px;
-            margin: 10px 0;
-            width: 100%;
-        }
-        
-        #progress-indicator {
-            background-color: #0066cc;
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background-color: #0066cc;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0052a3;
-        }
-        
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .btn-secondary {
-            background-color: #eee;
-            color: #333;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #ddd;
-        }
-        
-        .invisible {
-            visibility: hidden;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .download-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .results-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border-radius: 4px;
-        }
-        
-        .results-section.success {
-            background-color: #f0fff4;
-            border: 1px solid #c6f6d5;
-        }
-        
-        .results-section.warning {
-            background-color: #fffbeb;
-            border: 1px solid #fef3c7;
-        }
-        
-        .results-section.error {
-            background-color: #fff5f5;
-            border: 1px solid #fed7d7;
-        }
-
-        .space-y-3 > * + * {
-            margin-top: 0.75rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>VCU Sole Source Initial Screening Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .form-check.selected { background-color: #fef9c3; border-radius: 0.25rem; }
+    .fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .progress-bar { height: 6px; background: #e5e7eb; border-radius: 4px; margin-bottom: 1rem; }
+    .progress-bar-indicator { height: 100%; background: #f59e0b; border-radius: 4px; transition: width 0.3s; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <header class="mb-8">
-            <h1 class="text-2xl font-bold mb-4">Sole Source Procurement Assessment Tool</h1>
-            <p class="text-gray-600 mb-4">
-                This tool helps you determine if your procurement may qualify as a sole source. 
-                Answer the questions below to receive guidance.
-            </p>
-            <div style="background-color: #f0f7ff; border: 1px solid #cce5ff; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
-                <p style="margin: 0;">
-                    Important: This tool provides guidance only. Procurement Services makes the final determination on sole source requests.
-                </p>
-            </div>
-        </header>
-
-        <main id="form-container">
-            <div class="mb-6">
-                <p id="step-title" class="text-xl font-bold">Step 1: Procurement Amount</p>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span id="step-counter">Step 1 of 5</span>
-                    <div class="progress-bar">
-                        <div id="progress-indicator" style="width: 20%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="step-content" class="fade-in">
-                <!-- Step content will be dynamically inserted here -->
-            </div>
-
-            <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-                <button id="prev-button" onclick="handlePrevious()" class="btn btn-secondary invisible">
-                    Previous
-                </button>
-                <button id="next-button" onclick="handleNext()" class="btn btn-primary" disabled>
-                    Next
-                </button>
-            </div>
-        </main>
-
-        <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px;">
-                Sole Source Procurement Assessment Tool<br>
-                This tool is for guidance purposes only. Final determination is made by Procurement Services.
-            </p>
-        </footer>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-3xl mx-auto mt-10" id="form-container">
+    <!-- Dynamic content will be injected here -->
+    <div class="progress-bar">
+      <div class="progress-bar-indicator" id="progress-indicator" style="width: 33%"></div>
     </div>
+    <div class="p-6 bg-white rounded shadow-md">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold" id="step-title">Step 1: Procurement Amount</h2>
+        <div class="text-sm text-gray-500" id="step-counter">Step 1 of 3</div>
+      </div>
+      <div id="step-content" class="fade-in"></div>
+      <div class="flex justify-between mt-8">
+        <button id="prev-button" class="btn-secondary px-4 py-2 rounded-md invisible bg-gray-200 text-gray-800" onclick="handlePrevious()">Previous</button>
+        <button id="next-button" class="btn-primary px-4 py-2 rounded-md bg-yellow-500 text-white" onclick="handleNext()" disabled>Next</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- Required JavaScript libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
