@@ -187,8 +187,8 @@ function submitForm() {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
-
     let y = 35;
+
     const questions = [
       "Does the product or service have unique features or capabilities that only one supplier can provide?",
       "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
