@@ -24,7 +24,7 @@ function createStepOneContent() {
     <div class="mb-6 text-gray-700">
       <p class="mb-2 font-medium">Purpose</p>
       <p class="text-sm">
-        This tool helps you determine if a procurement request might qualify as a sole source—meaning only one supplier can practicably meet your needs due to unique features, technical constraints, or other non-time-related factors.
+        This tool helps you determine if a procurement request might qualify as a sole source—meaning only one supplier can practicably meet your needs due to unique features, constraints, or other factors.
         Answer the yes/no questions below to get instant feedback. No text input is required—just check the boxes.
         The procurement department will make the final determination, but this gives you a solid starting point.
       </p>
