@@ -280,6 +280,12 @@ const steps = [
   { title: "Step 3: Price Reasonableness", createContent: createStepThreeContent }
 ];
 
+const steps = [
+  { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
+  { title: "Step 2: Screening Questions", createContent: createStepTwoContent },
+  { title: "Step 3: Price Reasonableness", createContent: createStepThreeContent }
+];
+
 document.addEventListener('DOMContentLoaded', function () {
   updateProgressIndicator();
   createStepOneContent();
