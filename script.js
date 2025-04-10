@@ -19,6 +19,11 @@ function updateProgressIndicator() {
 }
 
 function createStepOneContent() {
+  console.log("createStepOneContent() is being called");
+  const stepContent = document.getElementById('step-content');
+  // ... rest of your code ...
+}
+
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
     <div class="mb-6 text-gray-700">
