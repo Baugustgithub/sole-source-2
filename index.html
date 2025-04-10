@@ -70,21 +70,28 @@ try {
       <p class="mb-4 text-gray-700 font-medium">What is the estimated dollar amount of your procurement?</p>
       <div class="space-y-3">
         <label class="form-check block">
-          <input type="radio" name="amount" value="under_10k" onclick="handleAmountChange(this)" ${formData.amount === 'under_10k' ? 'checked' : ''}>
+          <input type="radio" name="amount" value="under_10k" class="amount-radio" ${formData.amount === 'under_10k' ? 'checked' : ''}>
           <span class="ml-2">Less than $10,000</span>
         </label>
         <label class="form-check block">
-          <input type="radio" name="amount" value="10k_or_more" onclick="handleAmountChange(this)" ${formData.amount === '10k_or_more' ? 'checked' : ''}>
+          <input type="radio" name="amount" value="10k_or_more" class="amount-radio" ${formData.amount === '10k_or_more' ? 'checked' : ''}>
           <span class="ml-2">$10,000 or more</span>
         </label>
       </div>
     `;
+
+    // Add event listeners to radio buttons
+    const radioButtons = document.querySelectorAll('.amount-radio');
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', handleAmountChange);
+    });
+
     document.getElementById('next-button').disabled = !formData.amount;
   }
 
-  function handleAmountChange(input) {
-    console.log("Amount changed to:", input.value);
-    formData.amount = input.value;
+  function handleAmountChange(event) {
+    console.log("Amount changed to:", event.target.value);
+    formData.amount = event.target.value;
     document.getElementById('next-button').disabled = false;
   }
 
@@ -135,11 +142,11 @@ try {
           <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
           <div class="mt-1 space-x-4">
             <label class="inline-flex items-center">
-              <input type="radio" name="q${index}" ${selected === true ? 'checked' : ''} onclick="handleScreening(${index}, true)">
+              <input type="radio" name="q${index}" class="q${index}-radio" value="yes" ${selected === true ? 'checked' : ''}>
               <span class="ml-2">Yes</span>
             </label>
             <label class="inline-flex items-center">
-              <input type="radio" name="q${index}" ${selected === false ? 'checked' : ''} onclick="handleScreening(${index}, false)">
+              <input type="radio" name="q${index}" class="q${index}-radio" value="no" ${selected === false ? 'checked' : ''}>
               <span class="ml-2">No</span>
             </label>
           </div>
@@ -151,6 +158,16 @@ try {
           ` : ''}
         </div>
       `;
+    });
+
+    // Add event listeners to radio buttons in Step 2
+    questions.forEach((_, index) => {
+      const radios = document.querySelectorAll(`.q${index}-radio`);
+      radios.forEach(radio => {
+        radio.addEventListener('change', (event) => {
+          handleScreening(index, event.target.value === 'yes');
+        });
+      });
     });
 
     document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
@@ -176,10 +193,13 @@ try {
     stepContent.innerHTML = `
       <p class="mb-4 text-gray-700 font-medium">Before viewing your results, please confirm:</p>
       <label class="inline-flex items-start space-x-2">
-        <input type="checkbox" id="ack-check" onclick="handleAckToggle()" ${formData.acknowledged ? 'checked' : ''}>
+        <input type="checkbox" id="ack-check" ${formData.acknowledged ? 'checked' : ''}>
         <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
       </label>
     `;
+
+    // Add event listener to checkbox
+    document.getElementById('ack-check').addEventListener('change', handleAckToggle);
     document.getElementById('next-button').disabled = !formData.acknowledged;
   }
 
