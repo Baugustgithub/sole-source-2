@@ -4,8 +4,7 @@ const { jsPDF } = window.jspdf;
 
 let formData = {
   amount: null,
-  screeningAnswers: [null, null, null, null, null, null],
-  additionalFlags: [],
+  screeningAnswers: Array(12).fill(null),
   acknowledged: false
 };
 
@@ -51,19 +50,25 @@ function handleAmountChange(input) {
 }
 
 function createStepTwoContent() {
-  const questions = [
+  const allQuestions = [
     "Does the product or service have unique features or capabilities that only one supplier can provide?",
     "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
     "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
     "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
     "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+    "My preferred vendor",
+    "They offer the best price",
+    "They can meet my timeline",
+    "I’ve worked with them before",
+    "It's more convenient",
+    "None of the above"
   ];
 
   const stepContent = document.getElementById('step-content');
-  stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following six questions to evaluate your request:</p>`;
+  stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following questions to evaluate your request:</p>`;
 
-  questions.forEach((text, index) => {
+  allQuestions.forEach((text, index) => {
     const selected = formData.screeningAnswers[index];
     stepContent.innerHTML += `
       <div class="mb-4">
@@ -82,58 +87,12 @@ function createStepTwoContent() {
     `;
   });
 
-  // Additional Checkbox-style Dummy Justifications
-  const dummyOptions = [
-    "My preferred vendor",
-    "They offer the best price",
-    "They can meet my timeline",
-    "I’ve worked with them before",
-    "It's more convenient",
-    "None of the above"
-  ];
-
-  stepContent.innerHTML += `
-    <div class="mt-6">
-      <p class="font-medium text-gray-700 mb-2">Additional Answers</p>
-      <div class="space-y-2">
-        ${dummyOptions.map((label) => `
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="dummy" value="${label}" ${formData.additionalFlags.includes(label) ? 'checked' : ''} onclick="handleFlagClick(this)">
-            <span class="ml-2">${label}</span>
-          </label>
-        `).join('<br>')}
-      </div>
-    </div>
-  `;
-
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
-}
-
-function handleFlagClick(checkbox) {
-  const value = checkbox.value;
-
-  if (value === "None of the above") {
-    formData.additionalFlags = ["None of the above"];
-    document.querySelectorAll('input[name="dummy"]').forEach(cb => {
-      if (cb.value !== "None of the above") cb.checked = false;
-    });
-  } else {
-    const index = formData.additionalFlags.indexOf("None of the above");
-    if (index !== -1) formData.additionalFlags.splice(index, 1);
-    document.querySelector('input[value="None of the above"]').checked = false;
-
-    if (checkbox.checked) {
-      formData.additionalFlags.push(value);
-    } else {
-      const idx = formData.additionalFlags.indexOf(value);
-      if (idx !== -1) formData.additionalFlags.splice(idx, 1);
-    }
-  }
 }
 
 function createStepThreeContent() {
@@ -152,9 +111,8 @@ function handleAckToggle() {
   formData.acknowledged = document.getElementById('ack-check').checked;
   document.getElementById('next-button').disabled = !formData.acknowledged;
 }
-
 function evaluateResult() {
-  const yesCount = formData.screeningAnswers.filter(Boolean).length;
+  const validYesCount = formData.screeningAnswers.slice(0, 6).filter(Boolean).length;
 
   if (formData.amount === "under_10k") {
     return {
@@ -163,12 +121,12 @@ function evaluateResult() {
     };
   }
 
-  if (yesCount >= 5) {
+  if (validYesCount >= 5) {
     return {
       title: "Strong Case for Sole Source",
       message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Documentation Form</a>, then attach it to your requisition in RealSource.`
     };
-  } else if (yesCount >= 3) {
+  } else if (validYesCount >= 3) {
     return {
       title: "Potential Sole Source – Needs Stronger Justification",
       message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/docs/word/Sole_Source_Documentation.docx" target="_blank" class="underline text-blue-600">Download the Sole Source Documentation Form</a> and complete it if you wish to proceed.`
@@ -242,7 +200,13 @@ function submitForm() {
       "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
       "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
       "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+      "My preferred vendor",
+      "They offer the best price",
+      "They can meet my timeline",
+      "I’ve worked with them before",
+      "It's more convenient",
+      "None of the above"
     ];
 
     function addSection(title, value) {
@@ -263,15 +227,13 @@ function submitForm() {
     doc.setFont(undefined, 'normal');
 
     questions.forEach((q, i) => {
-      const answer = formData.screeningAnswers[i] ? "Yes" : "No";
+      const answer = formData.screeningAnswers[i] === true ? "Yes" : formData.screeningAnswers[i] === false ? "No" : "Not answered";
       const qLines = doc.splitTextToSize(`${i + 1}. ${q}`, 170);
       doc.text(qLines, 20, y);
       y += qLines.length * 6;
       doc.text(`Answer: ${answer}`, 25, y);
       y += 10;
     });
-
-    addSection("Additional Answers", formData.additionalFlags.join(", ") || "None selected");
 
     addSection("Acknowledgment", formData.acknowledged
       ? "Acknowledged: I understand that all sole source requests must include documentation showing the proposed price is fair and reasonable."
