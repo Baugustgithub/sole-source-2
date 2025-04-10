@@ -3,36 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sole Source Flow</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .step {
-      margin-bottom: 20px;
-    }
-    #progress-indicator div {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background-color: lightgray;
-      margin-right: 10px;
-    }
-    .active-step {
-      background-color: #007BFF;
-    }
-  </style>
+  <title>VCU Sole Source Screening Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
-  <h1>Sole Source Procurement Form</h1>
+<body class="bg-gray-50 text-gray-900">
 
-  <div id="progress-indicator"></div>
-  <div id="step-counter"></div>
-  <div id="step-title"></div>
-  <div id="step-content" class="step"></div>
+<div class="max-w-3xl mx-auto mt-10" id="form-container">
+  <div class="progress-bar mb-4 bg-gray-200 h-2 rounded">
+    <div id="progress-indicator" class="h-full bg-yellow-500 rounded" style="width: 0%"></div>
+  </div>
 
-  <script src="script.js"></script>
+  <div class="p-6 bg-white rounded shadow">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold" id="step-title">Step 1: Procurement Amount</h2>
+      <div id="step-counter" class="text-sm text-gray-500">Step 1 of 3</div>
+    </div>
+
+    <div id="step-content" class="fade-in"></div>
+
+    <div class="flex justify-between mt-8">
+      <button id="prev-button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded invisible" onclick="handlePrevious()">Previous</button>
+      <button id="next-button" class="px-4 py-2 bg-yellow-500 text-white rounded" onclick="handleNext()" disabled>Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const { jsPDF } = window.jspdf;
+
+let formData = {
+  amount: null,
+  screeningAnswers: [null, null, null, null, null, null],
+  acknowledged: false
+};
+
+let currentStep = 1;
+const totalSteps = 3;
+
+function updateProgressIndicator() {
+  const percentComplete = (currentStep / totalSteps) * 100;
+  document.getElementById('progress-indicator').style.width = `${percentComplete}%`;
+  document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
+  document.getElementById('step-title').textContent = steps[currentStep - 1].title;
+}
+
+function createStepOneContent() {
+  const stepContent = document.getElementById('step-content');
+  stepContent.innerHTML = `
+    <div class="mb-6 text-gray-700">
+      <p class="mb-2 font-medium">Purpose</p>
+      <p class="text-sm">
+        This tool helps you determine if a procurement request might qualify as a sole source—meaning only one supplier can practicably meet your needs due to unique features, technical constraints, or other non-time-related factors.
+        Answer the yes/no questions below to get instant feedback. No text input is required—just check the boxes.
+        The procurement department will make the final determination, but this gives you a solid starting point.
+      </p>
+    </div>
+    <p class="mb-4 text-gray-700 font-medium">What is the estimated dollar amount of your procurement?</p>
+    <div class="space-y-3">
+      <label class="form-check block">
+        <input type="radio" name="amount" value="under_10k" onclick="handleAmountChange(this)" ${formData.amount === 'under_10k' ? 'checked' : ''}>
+        <span class="ml-2">Less than $10,000</span>
+      </label>
+      <label class="form-check block">
+        <input type="radio" name="amount" value="10k_or_more" onclick="handleAmountChange(this)" ${formData.amount === '10k_or_more' ? 'checked' : ''}>
+        <span class="ml-2">$10,000 or more</span>
+      </label>
+    </div>
+  `;
+  document.getElementById('next-button').disabled = !formData.amount;
+}
+
+function handleAmountChange(input) {
+  formData.amount = input.value;
+  document.getElementById('next-button').disabled = false;
+}
+
+// Add your Step 2, Step 3, evaluateResult, handleNext, handlePrevious, and submitForm functions here...
+
+// Step array and page load
+const steps = [
+  { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
+  { title: "Step 2: Screening Questions", createContent: () => {} },
+  { title: "Step 3: Price Reasonableness", createContent: () => {} }
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+  updateProgressIndicator();
+  createStepOneContent();
+});
+</script>
 </body>
 </html>
