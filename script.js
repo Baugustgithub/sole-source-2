@@ -4,8 +4,7 @@ const { jsPDF } = window.jspdf;
 
 let formData = {
   amount: null,
-  screeningAnswers: Array(6).fill(null),
-  additionalReasons: [],
+  screeningAnswers: Array(8).fill(null), // Now includes 8 questions
   acknowledged: false
 };
 
@@ -57,7 +56,9 @@ function createStepTwoContent() {
     "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
     "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
     "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+    "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+    "My preferred vendor, they offer the best price, they can meet my timeline, I’ve worked with them before, it’s about convenience, etc.",
+    "Other"
   ];
 
   const stepContent = document.getElementById('step-content');
@@ -82,47 +83,12 @@ function createStepTwoContent() {
     `;
   });
 
-  // Additional Justifications
-  const additionalOptions = [
-    "My preferred vendor",
-    "They offer the best price",
-    "They can meet my timeline",
-    "I’ve worked with them before",
-    "It's more convenient",
-    "Other"
-  ];
-
-  stepContent.innerHTML += `
-    <div class="mt-6">
-      <p class="font-medium text-gray-700 mb-2">Which of the following apply? (Optional)</p>
-      <div class="space-y-2">
-        ${additionalOptions.map(option => `
-          <label class="inline-flex items-center">
-            <input type="checkbox" name="additional" value="${option}" 
-              ${formData.additionalReasons.includes(option) ? 'checked' : ''}
-              onclick="handleAdditionalReason(this)">
-            <span class="ml-2">${option}</span>
-          </label>
-        `).join('<br>')}
-      </div>
-    </div>
-  `;
-
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
 }
 
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
-}
-
-function handleAdditionalReason(checkbox) {
-  const value = checkbox.value;
-  if (checkbox.checked) {
-    if (!formData.additionalReasons.includes(value)) formData.additionalReasons.push(value);
-  } else {
-    formData.additionalReasons = formData.additionalReasons.filter(r => r !== value);
-  }
 }
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
@@ -142,7 +108,7 @@ function handleAckToggle() {
 }
 
 function evaluateResult() {
-  const yesCount = formData.screeningAnswers.filter(Boolean).length;
+  const yesCount = formData.screeningAnswers.slice(0, 6).filter(Boolean).length;
 
   if (formData.amount === "under_10k") {
     return {
@@ -225,7 +191,9 @@ function submitForm() {
       "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
       "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
       "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
-      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?"
+      "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+      "My preferred vendor, they offer the best price, they can meet my timeline, I’ve worked with them before, it’s about convenience, etc.",
+      "Other"
     ];
 
     const headers = [["#", "Question", "Answer"]];
@@ -253,25 +221,11 @@ function submitForm() {
     let y = doc.previousAutoTable.finalY + 10;
     doc.setFontSize(11);
 
-    doc.text("Additional Justifications (if any):", 14, y);
-    y += 6;
-    if (formData.additionalReasons.length > 0) {
-      doc.setFont(undefined, "normal");
-      formData.additionalReasons.forEach(reason => {
-        doc.text(`• ${reason}`, 18, y);
-        y += 6;
-      });
-    } else {
-      doc.text("None selected.", 18, y);
-      y += 6;
-    }
-
-    y += 8;
     doc.setFont(undefined, "bold");
     doc.text("Final Result:", 14, y);
     y += 6;
     doc.setFont(undefined, "normal");
-    const resultLines = doc.splitTextToSize(evaluateResult().title, 180);
+    const resultLines = doc.splitTextToSize(result.title, 180);
     doc.text(resultLines, 14, y);
     y += resultLines.length * 6;
 
@@ -279,7 +233,7 @@ function submitForm() {
     doc.text("Guidance:", 14, y);
     y += 6;
     doc.setFont(undefined, "normal");
-    const msgLines = doc.splitTextToSize(evaluateResult().message.replace(/<[^>]+>/g, ''), 180);
+    const msgLines = doc.splitTextToSize(result.message.replace(/<[^>]+>/g, ''), 180);
     doc.text(msgLines, 14, y);
 
     doc.save("VCU-Sole-Source-Screening.pdf");
