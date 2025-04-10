@@ -114,6 +114,7 @@ function createStepTwoContent() {
 
   document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
 }
+}
 
 function handleScreening(index, value) {
   formData.screeningAnswers[index] = value;
