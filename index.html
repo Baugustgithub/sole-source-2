@@ -2,45 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VCU Sole Source Screening Tool</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sole Source Flow</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .step {
+      margin-bottom: 20px;
+    }
+    #progress-indicator div {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: lightgray;
+      margin-right: 10px;
+    }
+    .active-step {
+      background-color: #007BFF;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body>
+  <h1>Sole Source Procurement Form</h1>
 
-  <div id="form-container" class="max-w-3xl mx-auto mt-8 p-6 bg-white shadow rounded-lg">
-    <div class="mb-6">
-      <div class="w-full bg-gray-200 h-2 rounded">
-        <div id="progress-indicator" class="bg-blue-600 h-2 rounded transition-all duration-300" style="width: 0%;"></div>
-      </div>
-    </div>
+  <div id="progress-indicator"></div>
+  <div id="step-counter"></div>
+  <div id="step-title"></div>
+  <div id="step-content" class="step"></div>
 
-    <div class="mb-4">
-      <h2 id="step-title" class="text-2xl font-bold">Step Title</h2>
-      <p id="step-counter" class="text-sm text-gray-500">Step x of y</p>
-    </div>
-
-    <div id="step-content" class="mb-6">
-  </div>
-
-      <!-- Step content will render here -->
-    </div>
-
-    <div class="flex justify-between">
-      <button id="prev-button" class="bg-gray-300 text-gray-800 px-4 py-2 rounded disabled:opacity-50 invisible">Previous</button>
-      <button id="next-button" class="bg-yellow-500 text-white px-4 py-2 rounded disabled:opacity-50">Next</button>
-    </div>
-  </div>
-
-  <!-- jsPDF Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- Initialize jsPDF globally -->
-  <script>
-    const { jsPDF } = window.jspdf;
-  </script>
-
-  <!-- Your App Script -->
   <script src="script.js"></script>
 </body>
 </html>
