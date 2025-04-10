@@ -1,402 +1,237 @@
 'use strict';
 
-// Initialize jsPDF and FileSaver from libraries
 const { jsPDF } = window.jspdf;
 
-// Form data object to store all responses
 let formData = {
-    amount: null,
-    single_source: null,
-    justification: [],
-    alternatives_researched: null,
-    alternatives_reason_options: [],
-    price_reasonable: []
+  amount: null,
+  screeningAnswers: [null, null, null, null, null, null],
+  acknowledged: false
 };
 
-// Current step tracker (1-based index)
 let currentStep = 1;
-const totalSteps = 5;
+const totalSteps = 3;
 
-// Mapping for value display in results
-const valueMappings = {
-    less_than_10k: "Less than $10,000",
-    "10k_to_200k": "$10,000 to $200,000",
-    above_200k: "$200,000 and above",
-    yes: "Yes",
-    no: "No",
-    unsure: "Unsure",
-    exclusive_distribution: "Exclusive distribution",
-    compatible_accessory: "Integral part or accessory compatible with existing equipment",
-    maintenance: "Maintenance service for existing equipment",
-    software_maintenance: "Upgrade or maintenance for existing software",
-    research_continuity: "Used in research and required for continuity of results",
-    patent: "Copyrighted or patented and only available from the recommended source",
-    training: "Considerable re-orientation and training would be required",
-    grant: "Vendor specifically named in a grant and/or grant proposal",
-    specified_in_grant: "Specified in grant/funding",
-    continuation_existing: "Continuation of existing project",
-    exclusive_rights: "Vendor has exclusive rights",
-    market_expertise: "Market expertise",
-    early_planning: "Still in early planning",
-    gathering_requirements: "Currently gathering requirements",
-    timing_constraints: "Time limitations",
-    previous_vendor_familiarity: "Familiarity with vendor",
-    convenience: "Convenience",
-    historical: "Historical/past pricing",
-    similar: "Prices charged for similar items",
-    other_customers: "Prices paid by other customers",
-    public_price: "A public price list or public catalog",
-    negotiated: "I have negotiated with the vendor or secured educational discounts",
-    none: "None of the above"
-};
-
-// Step data with titles, descriptions, and content creator functions
-const steps = [
-    {
-        title: "Step 1: Procurement Amount",
-        description: "What is the estimated dollar amount of your procurement?",
-        createContent: createStepOneContent
-    },
-    {
-        title: "Step 2: Single Source Status",
-        description: "Is this product or service available from only one source?",
-        createContent: createStepTwoContent
-    },
-    {
-        title: "Step 3: Justification",
-        description: "Select all the reasons that apply to this procurement:",
-        createContent: createStepThreeContent
-    },
-    {
-        title: "Step 4: Alternatives Research",
-        description: "Have you researched alternative products or services?",
-        createContent: createStepFourContent
-    },
-    {
-        title: "Step 5: Price Reasonableness",
-        description: "How have you determined that the price is reasonable?",
-        createContent: createStepFiveContent
-    }
-];
-
-// Helper function to update the progress indicator
 function updateProgressIndicator() {
-    const percentComplete = (currentStep / totalSteps) * 100;
-    document.getElementById('progress-indicator').style.width = `${percentComplete}%`;
-    document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
-    document.getElementById('step-title').textContent = steps[currentStep - 1].title;
+  const percentComplete = (currentStep / totalSteps) * 100;
+  document.getElementById('progress-indicator').style.width = `${percentComplete}%`;
+  document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
+  document.getElementById('step-title').textContent = steps[currentStep - 1].title;
 }
 
-// Event handlers for selection options
-function handleAmountSelection(element) {
-    // Clear previous selections
-    document.querySelectorAll('[data-value]').forEach(el => {
-        el.classList.remove('selected');
-        const radio = el.querySelector('input[type="radio"]');
-        if (radio) radio.checked = false;
-    });
-
-    // Set new selection
-    element.classList.add('selected');
-    const radio = element.querySelector('input[type="radio"]');
-    if (radio) radio.checked = true;
-
-    // Update form data
-    formData.amount = element.dataset.value;
-
-    // Enable next button
-    document.getElementById('next-button').disabled = false;
+function handleAmountSelection(value) {
+  formData.amount = value;
+  document.getElementById('next-button').disabled = false;
 }
 
-function handleSingleSourceSelection(element) {
-    // Clear previous selections
-    document.querySelectorAll('[data-value]').forEach(el => {
-        el.classList.remove('selected');
-        const radio = el.querySelector('input[type="radio"]');
-        if (radio) radio.checked = false;
-    });
-
-    // Set new selection
-    element.classList.add('selected');
-    const radio = element.querySelector('input[type="radio"]');
-    if (radio) radio.checked = true;
-
-    // Update form data
-    formData.single_source = element.dataset.value;
-
-    // Enable next button
-    document.getElementById('next-button').disabled = false;
-}
-
-function handleJustificationSelection(element) {
-    element.classList.toggle('selected');
-    const checkbox = element.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-
-    const value = element.dataset.value;
-
-    // Update the form data
-    if (checkbox.checked) {
-        if (!formData.justification.includes(value)) {
-            formData.justification.push(value);
-        }
-    } else {
-        formData.justification = formData.justification.filter(item => item !== value);
-    }
-
-    // Enable next button if at least one option is selected
-    document.getElementById('next-button').disabled = formData.justification.length === 0;
-}
-
-function handleAlternativesSelection(element) {
-    // Clear previous selections
-    document.querySelectorAll('[data-value]').forEach(el => {
-        el.classList.remove('selected');
-        const radio = el.querySelector('input[type="radio"]');
-        if (radio) radio.checked = false;
-    });
-
-    // Set new selection
-    element.classList.add('selected');
-    const radio = element.querySelector('input[type="radio"]');
-    if (radio) radio.checked = true;
-
-    // Update form data
-    formData.alternatives_researched = element.dataset.value;
-
-    // Show/hide additional options based on selection
-    const additionalOptions = document.getElementById('alternatives-additional-options');
-    if (additionalOptions) {
-        additionalOptions.style.display = formData.alternatives_researched === 'no' ? 'block' : 'none';
-    }
-
-    // Reset alternatives reasons if "yes" is selected
-    if (formData.alternatives_researched === 'yes') {
-        formData.alternatives_reason_options = [];
-        document.querySelectorAll('[name="alternatives_reason_options"]').forEach(checkbox => {
-            checkbox.checked = false;
-            checkbox.closest('.form-check').classList.remove('selected');
-        });
-    }
-
-    // Enable next button
-    document.getElementById('next-button').disabled = false;
-}
-
-function handleAlternativesReasonSelection(element) {
-    element.classList.toggle('selected');
-    const checkbox = element.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-
-    const value = element.dataset.value;
-
-    // Update the form data
-    if (checkbox.checked) {
-        if (!formData.alternatives_reason_options.includes(value)) {
-            formData.alternatives_reason_options.push(value);
-        }
-    } else {
-        formData.alternatives_reason_options = formData.alternatives_reason_options.filter(item => item !== value);
-    }
-}
-
-function handlePriceSelection(element) {
-    element.classList.toggle('selected');
-    const checkbox = element.querySelector('input[type="checkbox"]');
-    checkbox.checked = !checkbox.checked;
-
-    const value = element.dataset.value;
-
-    // Update the form data
-    if (checkbox.checked) {
-        if (!formData.price_reasonable.includes(value)) {
-            formData.price_reasonable.push(value);
-        }
-    } else {
-        formData.price_reasonable = formData.price_reasonable.filter(item => item !== value);
-    }
-
-    // Enable next button if at least one option is selected
-    document.getElementById('next-button').disabled = formData.price_reasonable.length === 0;
-}
-
-// Content creator functions for each step
 function createStepOneContent() {
-    const stepContent = document.getElementById('step-content');
-    stepContent.innerHTML = `
-        <p class="mb-4 text-gray-700">What is the estimated dollar amount of your procurement?</p>
-        <div class="space-y-3">
-            <div class="form-check" data-value="less_than_10k" onclick="handleAmountSelection(this)">
-                <input type="radio" name="amount" value="less_than_10k">
-                <label>
-                    <span class="font-medium">Less than $10,000</span>
-                    <span class="text-gray-600 block text-sm">Delegated authority threshold</span>
-                </label>
-            </div>
-            <div class="form-check" data-value="10k_to_200k" onclick="handleAmountSelection(this)">
-                <input type="radio" name="amount" value="10k_to_200k">
-                <label>
-                    <span class="font-medium">$10,000 to $200,000</span>
-                    <span class="text-gray-600 block text-sm">Standard sole source documentation required</span>
-                </label>
-            </div>
-            <div class="form-check" data-value="above_200k" onclick="handleAmountSelection(this)">
-                <input type="radio" name="amount" value="above_200k">
-                <label>
-                    <span class="font-medium">$200,000 and above</span>
-                    <span class="text-gray-600 block text-sm">Additional approval required</span>
-                </label>
-            </div>
-        </div>
-    `;
+  const stepContent = document.getElementById('step-content');
+  stepContent.innerHTML = `
+    <p class="mb-4 text-gray-700 font-medium">What is the estimated dollar amount of your procurement?</p>
+    <div class="space-y-3">
+      <div class="form-check" onclick="handleAmountSelection('under_10k')">
+        <label class="flex items-start">
+          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500"> <span class="ml-3">Less than $10,000</span>
+        </label>
+      </div>
+      <div class="form-check" onclick="handleAmountSelection('10k_or_more')">
+        <label class="flex items-start">
+          <input type="radio" name="amount" class="mt-1 h-4 w-4 text-yellow-500"> <span class="ml-3">$10,000 or more</span>
+        </label>
+      </div>
+    </div>
+  `;
 
-    // Reset next button state based on selection
-    document.getElementById('next-button').textContent = 'Next';
-    document.getElementById('next-button').disabled = !formData.amount;
+  document.getElementById('next-button').disabled = !formData.amount;
+}
 
-    // Update any pre-selected options
-    if (formData.amount) {
-        const selectedElement = document.querySelector(`[data-value="${formData.amount}"]`);
-        if (selectedElement) {
-            selectedElement.classList.add('selected');
-            const radio = selectedElement.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-        }
+function handleNext() {
+  if (currentStep === 1 && formData.amount === 'under_10k') {
+    submitForm();
+    return;
+  }
+
+  if (currentStep === totalSteps) {
+    submitForm();
+    return;
+  }
+
+  currentStep++;
+  updateProgressIndicator();
+  steps[currentStep - 1].createContent();
+  document.getElementById('prev-button').classList.remove('invisible');
+}
+
+function handlePrevious() {
+  if (currentStep > 1) {
+    currentStep--;
+    updateProgressIndicator();
+    steps[currentStep - 1].createContent();
+    if (currentStep === 1) {
+      document.getElementById('prev-button').classList.add('invisible');
     }
+  }
+}
+function handleScreeningSelection(index, value) {
+  formData.screeningAnswers[index] = value;
+  const allAnswered = formData.screeningAnswers.every(ans => ans !== null);
+  document.getElementById('next-button').disabled = !allAnswered;
 }
 
 function createStepTwoContent() {
-    const stepContent = document.getElementById('step-content');
-    stepContent.innerHTML = `
-        <p class="mb-4 text-gray-700">${steps[1].description}</p>
-        <div class="space-y-3">
-            <div class="form-check" data-value="yes" onclick="handleSingleSourceSelection(this)">
-                <input type="radio" name="single_source" value="yes">
-                <label>
-                    <span class="font-medium">Yes</span>
-                    <span class="text-gray-600 block text-sm">Only one supplier can provide this product or service</span>
-                </label>
-            </div>
-            <div class="form-check" data-value="no" onclick="handleSingleSourceSelection(this)">
-                <input type="radio" name="single_source" value="no">
-                <label>
-                    <span class="font-medium">No</span>
-                    <span class="text-gray-600 block text-sm">Multiple suppliers can provide this product or service</span>
-                </label>
-            </div>
-            <div class="form-check" data-value="unsure" onclick="handleSingleSourceSelection(this)">
-                <input type="radio" name="single_source" value="unsure">
-                <label>
-                    <span class="font-medium">I'm not sure</span>
-                    <span class="text-gray-600 block text-sm">More research needed to determine available sources</span>
-                </label>
-            </div>
-        </div>
-    `;
-
-    // Reset next button state based on selection
-    document.getElementById('next-button').disabled = !formData.single_source;
-
-    // Update any pre-selected options
-    if (formData.single_source) {
-        const selectedElement = document.querySelector(`[data-value="${formData.single_source}"]`);
-        if (selectedElement) {
-            selectedElement.classList.add('selected');
-            const radio = selectedElement.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-        }
+  const questions = [
+    {
+      text: "Does the product or service have unique features or capabilities that only one supplier can provide?",
+      guidance: "Consider specific technical specifications, proprietary technology, or specialized functionality that no other supplier offers."
+    },
+    {
+      text: "Are there legal or technical barriers that prevent other suppliers from offering an equivalent solution?",
+      guidance: "Think about patents, copyrights, exclusive licenses, compatibility requirements with existing systems—or if the supplier is explicitly named in a grant or funding award."
+    },
+    {
+      text: "Are there practical constraints (e.g., location, expertise, or compatibility) that make other suppliers impracticable?",
+      guidance: "Would alternatives fail due to geographic limitations, lack of necessary skills, or incompatibility with existing systems?"
+    },
+    {
+      text: "Have you conducted a reasonable market check and found no other suppliers that can practicably meet your needs?",
+      guidance: "A quick online search, contacting vendors, or reviewing industry sources can help confirm availability."
+    },
+    {
+      text: "Would adapting or modifying another supplier’s product or service be technically or financially unfeasible?",
+      guidance: "Would it require excessive cost, complexity, or risk to adjust an alternative?"
+    },
+    {
+      text: "Is the supplier’s solution critical to meeting a specific regulatory, safety, or operational standard that others can’t satisfy?",
+      guidance: "Does compliance with laws, safety, or operations tie you to this vendor?"
     }
+  ];
+
+  const stepContent = document.getElementById('step-content');
+  stepContent.innerHTML = `<p class="mb-4 text-gray-700 font-medium">Answer the following six questions to evaluate your request:</p>`;
+
+  questions.forEach((q, index) => {
+    const answer = formData.screeningAnswers[index];
+    stepContent.innerHTML += `
+      <div class="mb-5">
+        <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
+        <p class="text-sm text-gray-500 italic mb-2">Guidance: ${q.guidance}</p>
+        <div class="space-x-4">
+          <label class="inline-flex items-center">
+            <input type="radio" name="q${index}" ${answer === true ? "checked" : ""} onclick="handleScreeningSelection(${index}, true)">
+            <span class="ml-2">Yes</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="radio" name="q${index}" ${answer === false ? "checked" : ""} onclick="handleScreeningSelection(${index}, false)">
+            <span class="ml-2">No</span>
+          </label>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('next-button').disabled = !formData.screeningAnswers.every(ans => ans !== null);
+}
+
+function handleAcknowledgmentChange(checkbox) {
+  formData.acknowledged = checkbox.checked;
+  document.getElementById('next-button').disabled = !formData.acknowledged;
 }
 
 function createStepThreeContent() {
-    const stepContent = document.getElementById('step-content');
-    
-    const justificationOptions = [
-        {
-            value: 'exclusive_distribution',
-            label: 'Exclusive distribution',
-            description: 'The recommended source has exclusive distribution rights for this item'
-        },
-        {
-            value: 'compatible_accessory',
-            label: 'Compatible accessory',
-            description: 'This is an integral part or accessory that is compatible with existing equipment'
-        },
-        {
-            value: 'maintenance',
-            label: 'Maintenance service',
-            description: 'This is for maintenance service of existing equipment'
-        },
-        {
-            value: 'software_maintenance',
-            label: 'Software maintenance',
-            description: 'This is for upgrade or maintenance for existing software'
-        },
-        {
-            value: 'research_continuity',
-            label: 'Research continuity',
-            description: 'This is used in research and required for continuity of results'
-        },
-        {
-            value: 'patent',
-            label: 'Patent/Copyright',
-            description: 'This is copyrighted or patented and only available from the recommended source'
-        },
-        {
-            value: 'training',
-            label: 'Training requirements',
-            description: 'Considerable re-orientation and training would be required'
-        },
-        {
-            value: 'grant',
-            label: 'Grant specified',
-            description: 'Vendor specifically named in a grant and/or grant proposal'
-        }
-    ];
+  const stepContent = document.getElementById('step-content');
+  stepContent.innerHTML = `
+    <p class="mb-4 text-gray-700 font-medium">Before viewing your results, please confirm:</p>
+    <label class="inline-flex items-start space-x-2">
+      <input type="checkbox" onclick="handleAcknowledgmentChange(this)">
+      <span>I understand that all sole source requests must include documentation showing that the proposed price is fair and reasonable (e.g., market comparisons, historical pricing, written justification).</span>
+    </label>
+  `;
 
-    let html = `
-        <p class="mb-4 text-gray-700">${steps[2].description}</p>
-        <div class="space-y-3">
-    `;
+  document.getElementById('next-button').disabled = !formData.acknowledged;
+}
+function evaluateResult() {
+  if (formData.amount === "under_10k") {
+    return {
+      title: "Not a Sole Source – Delegated Authority",
+      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation. Proceed with purchasing through an appropriate method (e.g., p-card or small-dollar PO) without submitting a sole source justification."
+    };
+  }
 
-    justificationOptions.forEach(option => {
-        html += `
-            <div class="form-check${formData.justification.includes(option.value) ? ' selected' : ''}" 
-                data-value="${option.value}" 
-                onclick="handleJustificationSelection(this)">
-                <input type="checkbox" name="justification" value="${option.value}"
-                    ${formData.justification.includes(option.value) ? 'checked' : ''}>
-                <label>
-                    <span class="font-medium">${option.label}</span>
-                    <span class="text-gray-600 block text-sm">${option.description}</span>
-                </label>
-            </div>
-        `;
-    });
+  const yesAnswers = formData.screeningAnswers.filter(Boolean).length;
+  const answeredYesToQ4 = formData.screeningAnswers[3] === true;
 
-    html += '</div>';
-    stepContent.innerHTML = html;
-
-    // Reset next button state based on selection
-    document.getElementById('next-button').disabled = formData.justification.length === 0;
+  if (yesAnswers >= 4 && answeredYesToQ4) {
+    return {
+      title: "Strong Case for Sole Source",
+      message: "Based on your answers, this request appears to have a strong case for a sole source. Download and complete the Sole Source Justification Form, attach it to your requisition in RealSource, and submit it for procurement review."
+    };
+  } else if (yesAnswers === 3 && answeredYesToQ4) {
+    return {
+      title: "Potential Sole Source – Needs Stronger Justification",
+      message: "Your request might qualify as a sole source, but the justification could be stronger. Review your answers to see if additional factors apply. If you choose to proceed, complete the Justification Form and submit it through RealSource."
+    };
+  } else {
+    return {
+      title: "Not Likely a Sole Source",
+      message: "Your request likely does not meet sole source criteria. Explore whether other suppliers could practicably meet your needs and consider alternative procurement methods."
+    };
+  }
 }
 
-function createStepFourContent() {
-    const stepContent = document.getElementById('step-content');
-    
-    let html = `
-        <p class="mb-4 text-gray-700">${steps[3].description}</p>
-        <div class="space-y-3">
-            <div class="form-check${formData.alternatives_researched === 'yes' ? ' selected' : ''}" 
-                data-value="yes" 
-                onclick="handleAlternativesSelection(this)">
-                <input type="radio" name="alternatives_researched" value="yes"
-                    ${formData.alternatives_researched === 'yes' ? 'checked' : ''}>
-                <label>
-                    <span class="font-medium">Yes</span>
-                    <span class="text-gray-600 block text-sm">I have researched other options but this is the only one that meets our needs</span>
-                </label>
-            </div>
-            <div class="form-check${formData.alternatives_researched === 'no' ? ' selected' : ''}" 
-                data-value="no" 
-                onclick
+function submitForm() {
+  const result = evaluateResult();
+  const container = document.getElementById('form-container');
+  container.innerHTML = `
+    <div class="p-6 fade-in">
+      <h2 class="text-xl font-semibold mb-4">Sole Source Screening Results</h2>
+      <div class="bg-green-50 border border-green-200 p-4 mb-6 rounded-md">
+        <h3 class="text-lg font-medium text-green-800 mb-2">${result.title}</h3>
+        <p class="text-green-700">${result.message}</p>
+      </div>
+      <div class="flex space-x-4 mt-6">
+        <button id="start-over" class="btn-secondary px-4 py-2 rounded-md">Start Over</button>
+        <button id="download-pdf" class="btn-primary px-4 py-2 rounded-md">Download PDF</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('start-over').addEventListener('click', () => window.location.reload());
+
+  document.getElementById('download-pdf').addEventListener('click', () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('VCU Sole Source Initial Screening Summary', 20, 20);
+
+    let y = 35;
+
+    function addSection(title, value) {
+      doc.setFont(undefined, 'bold');
+      doc.text(`${title}:`, 20, y);
+      y += 6;
+      doc.setFont(undefined, 'normal');
+      const lines = doc.splitTextToSize(value || 'N/A', 170);
+      doc.text(lines, 20, y);
+      y += lines.length * 6 + 4;
+    }
+
+    addSection('Procurement Amount', formData.amount === "under_10k" ? "Less than $10,000" : "$10,000 or more");
+    formData.screeningAnswers.forEach((ans, i) => {
+      addSection(`Question ${i + 1}`, ans ? "Yes" : "No");
+    });
+    addSection('Price Reasonableness Acknowledged', formData.acknowledged ? "Yes" : "No");
+    addSection('Result', result.title);
+    addSection('Guidance', result.message);
+
+    doc.save('VCU-Sole-Source-Screening.pdf');
+  });
+}
+
+const steps = [
+  { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
+  { title: "Step 2: Screening Questions", createContent: createStepTwoContent },
+  { title: "Step 3: Price Reasonableness", createContent: createStepThreeContent }
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+  updateProgressIndicator();
+  createStepOneContent();
+});
