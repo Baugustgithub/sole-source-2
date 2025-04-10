@@ -18,7 +18,7 @@ function updateProgressIndicator() {
   document.getElementById('step-title').textContent = steps[currentStep - 1].title;
 }
 
-// ========== STEP 1 ==========
+// STEP 1
 function createStepOneContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
@@ -42,7 +42,7 @@ function handleAmountChange(input) {
   document.getElementById('next-button').disabled = false;
 }
 
-// ========== STEP 2 ==========
+// STEP 2
 function createStepTwoContent() {
   const questions = [
     "Does the product or service have unique features or capabilities that only one supplier can provide?",
@@ -83,7 +83,7 @@ function handleScreening(index, value) {
   document.getElementById('next-button').disabled = !formData.screeningAnswers.every(v => v !== null);
 }
 
-// ========== STEP 3 ==========
+// STEP 3
 function createStepThreeContent() {
   const stepContent = document.getElementById('step-content');
   stepContent.innerHTML = `
@@ -101,14 +101,40 @@ function handleAckToggle() {
   document.getElementById('next-button').disabled = !formData.acknowledged;
 }
 
-// ========== STEP NAVIGATION ==========
+// RESULT LOGIC
+function evaluateResult() {
+  const yesCount = formData.screeningAnswers.filter(Boolean).length;
+
+  if (formData.amount === "under_10k") {
+    return {
+      title: "Not a Sole Source – Delegated Authority",
+      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation. Proceed using p-card or standard purchasing methods."
+    };
+  }
+
+  if (yesCount >= 5) {
+    return {
+      title: "Strong Case for Sole Source",
+      message: `Based on your answers, this request appears to have a strong case for a sole source. <a href="https://procurement.vcu.edu/media/procurement/documents/sole-source-form.pdf" target="_blank" class="underline text-blue-600">Download and complete the Sole Source Justification Form</a>, then attach it to your requisition in RealSource.`
+    };
+  } else if (yesCount >= 3) {
+    return {
+      title: "Potential Sole Source – Needs Stronger Justification",
+      message: `This request might qualify as a sole source, but the justification could be stronger. <a href="https://procurement.vcu.edu/media/procurement/documents/sole-source-form.pdf" target="_blank" class="underline text-blue-600">Download the Justification Form</a> and complete it if you wish to proceed.`
+    };
+  } else {
+    return {
+      title: "Not Likely a Sole Source",
+      message: "Based on your responses, this request likely does not meet sole source criteria. Consider exploring other suppliers or competitive procurement methods."
+    };
+  }
+}
+
+// STEP CONTROL
 function handleNext() {
-  if (currentStep === 1 && formData.amount === 'under_10k') {
-    return submitForm();
-  }
-  if (currentStep === totalSteps) {
-    return submitForm();
-  }
+  if (currentStep === 1 && formData.amount === 'under_10k') return submitForm();
+  if (currentStep === totalSteps) return submitForm();
+
   currentStep++;
   updateProgressIndicator();
   steps[currentStep - 1].createContent();
@@ -126,37 +152,7 @@ function handlePrevious() {
   }
 }
 
-// ========== RESULT ==========
-function evaluateResult() {
-  if (formData.amount === "under_10k") {
-    return {
-      title: "Not a Sole Source – Delegated Authority",
-      message: "Procurements under $10,000 fall within your department’s delegated authority and do not require sole source documentation."
-    };
-  }
-
-  const yesAnswers = formData.screeningAnswers.filter(Boolean).length;
-  const q4Yes = formData.screeningAnswers[3] === true;
-
-  if (yesAnswers >= 4 && q4Yes) {
-    return {
-      title: "Strong Case for Sole Source",
-      message: "This request appears to have a strong case for a sole source. Download and complete the Justification Form and submit it through RealSource."
-    };
-  } else if (yesAnswers === 3 && q4Yes) {
-    return {
-      title: "Potential Sole Source – Needs Stronger Justification",
-      message: "This request might qualify as a sole source, but justification could be stronger. Consider expanding responses before proceeding."
-    };
-  } else {
-    return {
-      title: "Not Likely a Sole Source",
-      message: "This request likely does not meet sole source criteria. Explore alternative procurement methods."
-    };
-  }
-}
-
-// ========== SUBMIT ==========
+// SUBMIT & PDF
 function submitForm() {
   const result = evaluateResult();
   const container = document.getElementById('form-container');
@@ -223,13 +219,13 @@ function submitForm() {
       : "Not acknowledged");
 
     addSection('Final Result', result.title);
-    addSection('Guidance', result.message);
+    addSection('Guidance', result.message.replace(/<[^>]+>/g, '')); // Strip HTML
 
     doc.save('VCU-Sole-Source-Screening.pdf');
   });
 }
 
-// ========== INIT ==========
+// INIT
 const steps = [
   { title: "Step 1: Procurement Amount", createContent: createStepOneContent },
   { title: "Step 2: Screening Questions", createContent: createStepTwoContent },
