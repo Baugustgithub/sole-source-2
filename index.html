@@ -151,7 +151,7 @@ try {
             </label>
           </div>
           ${q.guidance ? `
-            <p class="guidance-toggle text-blue-600 underline cursor-pointer text-sm mt-1" onclick="toggleGuidance(${index})">Show guidance</p>
+            <p class="guidance-toggle text-blue-600 underline cursor-pointer text-sm mt-1" data-index="${index}">Show guidance</p>
             <div id="guidance-${index}" class="text-sm text-gray-600 mt-1 hidden">
               Guidance: ${q.guidance}
             </div>
@@ -170,6 +170,15 @@ try {
       });
     });
 
+    // Add event listeners to guidance toggles
+    const guidanceToggles = document.querySelectorAll('.guidance-toggle');
+    guidanceToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const index = toggle.getAttribute('data-index');
+        toggleGuidance(index);
+      });
+    });
+
     document.getElementById('next-button').disabled = !formData.screeningAnswers.slice(0, 6).every(v => v !== null);
   }
 
@@ -180,7 +189,7 @@ try {
   }
 
   function toggleGuidance(index) {
-    console.log("Toggling guidance for question:", index + 1);
+    console.log("Toggling guidance for question:", parseInt(index) + 1);
     const guidance = document.getElementById(`guidance-${index}`);
     if (guidance) {
       guidance.classList.toggle('hidden');
@@ -389,5 +398,6 @@ try {
   alert("An error occurred while loading the app. Please refresh the page or contact support.");
 }
 </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92eb666239229cf8',t:'MTc0NDM4NDExMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
